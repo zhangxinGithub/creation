@@ -1,0 +1,54 @@
+.writing {
+  position: relative;
+  font-size: 12px;
+  .left-menu {
+    position: fixed;
+    top: 7.5px;
+    left: 7.5px;
+    height: calc(100vh - 15px);
+    width: 50px;
+    background: #f5f6fa;
+    border-radius: 8px;
+    z-index: 2;
+  }
+  .container {
+    .top-bar {
+      padding: 20px 20px 20px 80px;
+    }
+    .content {
+      display: flex;
+      padding-left: 65px;
+      padding-right: 76px;
+      .center-body {
+        flex: 1;
+        background: #fff;
+        border: 7px solid #eaf0f6;
+        border-bottom: 0;
+        height: calc(100vh - 60px);
+      }
+      .right-body {
+        border-top: 7px solid #eaf0f6;
+      }
+    }
+  }
+  .right-menu {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 70px;
+    height: calc(100vh - 60px);
+    background: white;
+    .menu-item {
+      margin-top: 5px;
+      text-align: center;
+      margin-bottom: 15.422px;
+      color: #1d2129;
+      font-size: 12px;
+      cursor: pointer;
+      img {
+        margin-bottom: 5px;
+        width: 27px;
+      }
+    }
+  }
+}
