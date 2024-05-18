@@ -10,15 +10,33 @@
     background: #f5f6fa;
     border-radius: 8px;
     z-index: 2;
+    padding-top: 20px;
+    > div {
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 20px;
+      img {
+        width: 25px;
+        margin-bottom: 5px;
+      }
+    }
   }
   .container {
     .top-bar {
-      padding: 20px 20px 20px 80px;
+      padding: 10px 20px 10px 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .content {
       display: flex;
       padding-left: 65px;
       padding-right: 76px;
+      .left-body {
+        padding-right: 10px;
+        overflow: hidden;
+        animation: width 5s linear;
+      }
       .center-body {
         flex: 1;
         background: #fff;
@@ -27,7 +45,9 @@
         height: calc(100vh - 60px);
       }
       .right-body {
+        background: #eff5fc;
         border-top: 7px solid #eaf0f6;
+        overflow: hidden;
       }
     }
   }
@@ -48,6 +68,34 @@
       img {
         margin-bottom: 5px;
         width: 27px;
+      }
+    }
+  }
+  .doc-list {
+    display: flex;
+    justify-content: space-between;
+    //允许换行
+    flex-wrap: wrap;
+    .doc-item {
+      width: 84px;
+      margin-bottom: 8px;
+      border: 1px solid rgb(233, 234, 237);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 4px;
+      height: 120px;
+      &:hover {
+        border: 1px solid #2861f6;
+      }
+      .doc-title {
+        font-size: 14px;
+        margin-bottom: 10px;
+        margin-top: 8px;
+      }
+      .doc-content {
+        color: rgb(57, 62, 77);
+        overflow: hidden;
+        line-height: 14px;
       }
     }
   }

@@ -17,6 +17,8 @@ import {
 } from 'antd';
 import { articleType } from './data';
 import './step-model.less';
+import OverviewTable from '../overview-table/overview-table';
+import { RedoOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
@@ -25,7 +27,7 @@ const App = (props, ref) => {
   const [baseForm] = Form.useForm();
   //摘要信息表单
   const [summaryForm] = Form.useForm();
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [current, setCurrent] = useState(2);
   //稿件类型当前list
@@ -323,7 +325,7 @@ const App = (props, ref) => {
           size="small"
         >
           <Form.Item
-            label="摘要内容"
+            label="大纲内容"
             name="summary"
             rules={[
               {
@@ -332,7 +334,13 @@ const App = (props, ref) => {
               },
             ]}
           >
-            <div className="overview">123</div>
+            <div>
+              <OverviewTable />
+              <div className="redoOut">
+                <RedoOutlined style={{ marginRight: '4px' }} />
+                换一批
+              </div>
+            </div>
           </Form.Item>
         </Form>
       ) : null}

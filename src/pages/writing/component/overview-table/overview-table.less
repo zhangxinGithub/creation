@@ -1,0 +1,56 @@
+.overview-table {
+  background: #fafbfc;
+  overflow: hidden;
+  font-size: 12px;
+  width: 100%;
+  height: 300px;
+  border: 1px solid;
+  border-image: linear-gradient(47deg, #008bfa, #8137ff, #165dff) 1 1;
+  padding: 0 7px;
+  .table-header {
+    display: flex;
+    border-bottom: 1px solid #ededf0;
+    line-height: 30px;
+  }
+  .content {
+    overflow: scroll;
+    height: 100%;
+    //隐藏滚动条
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    .content-scroll {
+      padding-bottom: 50px;
+    }
+  }
+  .content-section {
+    .content-title {
+      color: '#333';
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    .content-list {
+      .add-item {
+        cursor: pointer;
+        color: #165dff;
+        margin-bottom: 8px;
+        margin-left: 40px;
+      }
+    }
+    .content-item {
+      display: flex;
+      margin-bottom: 8px;
+      .num {
+        border-radius: 50%;
+        background: #f0f1f3;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        margin-right: 16px;
+      }
+      .delete {
+        cursor: pointer;
+      }
+    }
+  }
+}
