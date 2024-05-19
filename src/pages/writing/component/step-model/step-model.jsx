@@ -15,21 +15,29 @@ import {
   Input,
   Space,
 } from 'antd';
-import { articleType } from './data';
+import { articleType, prompt, prompt1, prompt2 } from './data';
 import './step-model.less';
 import OverviewTable from '../overview-table/overview-table';
-import { RedoOutlined } from '@ant-design/icons';
+import { RedoOutlined, SyncOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
 const App = (props, ref) => {
+  //loading状态
+  const [loading, setLoading] = useState(false);
+  //表单str存储
+  const [formStr, setFormStr] = useState('');
+  //大纲信息
+  const [outlineData, setOutlineData] = useState({});
   //基本信息表单
   const [baseForm] = Form.useForm();
   //摘要信息表单
   const [summaryForm] = Form.useForm();
+  //summaryForm信息存储
+  const [summaryStr, setSummaryStr] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
-  const [current, setCurrent] = useState(2);
+  const [current, setCurrent] = useState(0);
   //稿件类型当前list
   const [articleClassList, setArticleClassList] = useState([]);
   //写作场景当前list
@@ -82,10 +90,102 @@ const App = (props, ref) => {
     setSceneList(list.scene);
     setInfoList(list.info);
   };
+  //获取baseForm信息返回字符串
+  const getBaseFormInfo = async () => {
+    let str = '';
+    await baseForm.validateFields().then((values) => {
+      console.log('values:', values);
+      console.log('infoList:', infoList);
+      //提取infoList中的label
+      const obj = [];
+      infoList.map((item) => {
+        obj.push(`【${item.label}】=${values[item.label]}`);
+      });
+      str = `###用户输入内容 【稿件分类】=${values.pageType} 【稿件类型】=${
+        values.pageClass
+      } 【写作场景】=${values.scene} 【字数】=${values.count} ${obj.join(
+        '\n'
+      )}`;
+    });
+    await setFormStr(str);
+    return str;
+  };
   //下一步
-  const nextStep = () => {
+  const nextStep = async () => {
     console.log('nextStep:', current);
-    setCurrent(current + 1);
+    if (current === 0) {
+      let str = await getBaseFormInfo();
+      await generateSummary(prompt, str, (result) => {
+        console.log('result:', result);
+        let text = result[0].content.text;
+        setFormStr(str);
+        setCurrent(1);
+        summaryForm.setFieldsValue({ summary: text });
+      });
+    }
+    if (current === 1) {
+      summaryForm.validateFields().then((values) => {
+        console.log('values:', values);
+        let str = formStr + `【主体信息描述】=${values.summary}`;
+        setSummaryStr(str);
+        generateSummary(prompt1, str, (result) => {
+          console.log('result:', result);
+          setOutlineData(result[0].content.text);
+          setCurrent(2);
+        });
+      });
+    }
+  };
+  //换一批
+  const redoOutline = () => {
+    generateSummary(prompt1, summaryStr, (result) => {
+      console.log('result:', result);
+      setOutlineData(result[0].content.text);
+    });
+  };
+  //模型生成摘要信息
+  const generateSummary = async (promptObj, data, callBack) => {
+    setLoading(true);
+    console.log('data:', data);
+    let postData = {
+      messages: [
+        {
+          role: 'SYSTEM',
+          content: {
+            text: promptObj.system,
+          },
+        },
+        {
+          role: 'USER',
+          content: {
+            text: promptObj.user + data,
+          },
+        },
+      ],
+      modelConfig: {
+        stream: false,
+      },
+    };
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    const response = await fetch(
+      'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+      {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(postData),
+      }
+    );
+    console.log('response:', response);
+    //解析非流式返回体
+    const res = await response.json();
+    console.log('res:', res);
+    let { succeed, result } = res;
+    if (succeed) {
+      callBack(result);
+    }
+    setLoading(false);
   };
   //上一步
   const prevStep0 = () => {
@@ -142,6 +242,7 @@ const App = (props, ref) => {
       width={900}
       onCancel={handleCancel}
       footer={null}
+      className="step-model"
     >
       <Steps
         style={{ marginBottom: '20px' }}
@@ -169,6 +270,23 @@ const App = (props, ref) => {
           },
         ]}
       />
+      {loading && (
+        <div
+          className="model-loading"
+          onClick={(e) => {
+            //禁止冒泡
+            e.stopPropagation();
+          }}
+        >
+          <div className="loading-body">
+            <SyncOutlined
+              style={{ color: '#165dff', marginRight: '8px' }}
+              spin
+            />
+            生成中...
+          </div>
+        </div>
+      )}
       {current === 0 ? (
         <div>
           <Form
@@ -181,9 +299,10 @@ const App = (props, ref) => {
               span: 20,
             }}
             initialValues={{
-              pageType: 1,
-              pageClass: '1-1',
-              count: 0,
+              pageType: '汇报类',
+              pageClass: '答复上级批示',
+              scene: ['工作进展情况'],
+              count: '短篇（500字以内）',
             }}
             layout="horizontal"
             size="small"
@@ -201,7 +320,7 @@ const App = (props, ref) => {
               <Radio.Group onChange={typeChange}>
                 {articleType.map((item) => {
                   return (
-                    <Radio key={item.id} value={item.id}>
+                    <Radio key={item.id} value={item.name}>
                       {item.name}
                     </Radio>
                   );
@@ -221,7 +340,7 @@ const App = (props, ref) => {
               <Radio.Group onChange={classChange}>
                 {articleClassList.map((item) => {
                   return (
-                    <Radio key={item.id} value={item.id}>
+                    <Radio key={item.id} value={item.name}>
                       {item.name}
                     </Radio>
                   );
@@ -247,7 +366,7 @@ const App = (props, ref) => {
               />
             </Form.Item>
             <Form.Item
-              label="稿件分类"
+              label="写作篇幅"
               name="count"
               rules={[
                 {
@@ -257,13 +376,13 @@ const App = (props, ref) => {
               ]}
             >
               <Radio.Group>
-                <Radio key={0} value={0}>
+                <Radio key={0} value={'短篇（500字以内）'}>
                   短(500字以内)
                 </Radio>
-                <Radio key={1} value={1}>
+                <Radio key={1} value={'中篇（500-1000字）'}>
                   中(500-1000字)
                 </Radio>
-                <Radio key={2} value={2}>
+                <Radio key={2} value={'长篇（1000-2000字）'}>
                   长(1000-2000字)
                 </Radio>
               </Radio.Group>
@@ -308,7 +427,7 @@ const App = (props, ref) => {
               },
             ]}
           >
-            <TextArea rows={4} />
+            <TextArea rows={14} />
           </Form.Item>
         </Form>
       ) : null}
@@ -335,8 +454,8 @@ const App = (props, ref) => {
             ]}
           >
             <div>
-              <OverviewTable />
-              <div className="redoOut">
+              <OverviewTable data={outlineData} />
+              <div className="redoOut" onClick={redoOutline}>
                 <RedoOutlined style={{ marginRight: '4px' }} />
                 换一批
               </div>
@@ -347,14 +466,14 @@ const App = (props, ref) => {
       <Divider />
       <div className="btn-group">
         {current === 0 ? (
-          <Button type="primary" onClick={nextStep}>
+          <Button type="primary" loading={loading} onClick={nextStep}>
             下一步
           </Button>
         ) : null}
         {current === 1 ? (
           <Space>
             <Button onClick={prevStep0}>返回:1基础信息</Button>
-            <Button type="primary" onClick={nextStep}>
+            <Button type="primary" loading={loading} onClick={nextStep}>
               下一步
             </Button>
           </Space>
@@ -363,7 +482,7 @@ const App = (props, ref) => {
           <Space>
             <Button onClick={prevStep0}>返回:1基础信息</Button>
             <Button onClick={prevStep1}>返回:2摘要信息</Button>
-            <Button type="primary" onClick={nextStep}>
+            <Button type="primary" loading={loading} onClick={nextStep}>
               开始写作
             </Button>
           </Space>

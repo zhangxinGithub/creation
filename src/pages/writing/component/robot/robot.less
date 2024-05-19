@@ -1,20 +1,44 @@
 .robot {
   padding: 0 15px;
+  .robot-text {
+    background: #fff;
+    border-radius: 0 10px 10px 10px;
+    padding: 13px;
+  }
+  .robot-btns {
+    display: flex;
+    align-items: center;
+    margin-top: 6px;
+    > div {
+      cursor: pointer;
+      background: #d6e3ff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px;
+      margin-right: 6px;
+    }
+  }
   .header {
+    .robot-logo {
+      display: flex;
+      align-items: center;
+      img {
+        width: 30px;
+        margin-right: 5px;
+      }
+    }
     margin-bottom: 10px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding-right: 10px;
     font-size: 14px;
     font-weight: 500;
     margin-top: 16px;
     margin-left: 8px;
-    img {
-      margin-right: 5px;
-      width: 30px;
-    }
   }
   .middle {
-    height: calc(100vh - 260px);
+    height: calc(100vh - 280px);
     overflow-y: scroll;
     &::-webkit-scrollbar {
       display: none;
@@ -66,6 +90,24 @@
   }
   .footer {
     height: 100px;
+    .writing-options {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      > div {
+        background: #dfeefc;
+        border: none;
+        border-radius: 5px;
+        margin-right: 5px;
+        padding: 5px 4px;
+        color: #606266;
+        cursor: pointer;
+      }
+      .action {
+        background: #165dff;
+        color: #fff;
+      }
+    }
     .textArea-body {
       background: #fff;
       border: 1px solid #165dff;

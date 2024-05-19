@@ -4,9 +4,11 @@ import { Input } from 'antd';
 import './robot.less';
 import palm from '@/assets/img/palm.png';
 import send from '@/assets/img/send.png';
+import { CloseCircleOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 const Robot = (props, ref) => {
+  const [writingOptions, setWritingOptions] = useState(0);
   //聊天记录
   const [chatList, setChatList] = useState([
     {
@@ -30,12 +32,27 @@ const Robot = (props, ref) => {
     setChatList(list);
     setInputValue('');
   };
+  //选择option
+  const selectOption = (value) => {
+    if (value === writingOptions) {
+      setWritingOptions(0);
+      return;
+    }
+    setWritingOptions(value);
+  };
+  //
 
   return (
     <div className="robot">
       <div className="header">
-        <img src={logo} />
-        小智AI
+        <div className="robot-logo">
+          <img src={logo} />
+          小智AI
+        </div>
+        <CloseCircleOutlined
+          onClick={props.toggleRightMenu}
+          style={{ color: '#666', cursor: 'pointer' }}
+        />
       </div>
       <div className="middle">
         <div className="info">
@@ -61,7 +78,7 @@ const Robot = (props, ref) => {
           if (item.type === 'robot') {
             return (
               <div className="robot" key={index}>
-                <div className="robot-text">123</div>;
+                <div className="robot-text">123</div>
                 <div className="robot-btns">
                   <div className="robot-btn">插入左侧</div>
                   <div className="robot-btn">复制</div>
@@ -75,6 +92,24 @@ const Robot = (props, ref) => {
         })}
       </div>
       <div className="footer">
+        <div className="writing-options">
+          <div
+            className={writingOptions === 1 ? 'action' : ''}
+            onClick={() => {
+              selectOption(1);
+            }}
+          >
+            AI创作助手
+          </div>
+          <div
+            className={writingOptions === 2 ? 'action' : ''}
+            onClick={() => {
+              selectOption(2);
+            }}
+          >
+            AI知识检索
+          </div>
+        </div>
         <div className="textArea-body">
           <TextArea
             value={inputValue}

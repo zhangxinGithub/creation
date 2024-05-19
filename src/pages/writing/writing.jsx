@@ -139,7 +139,7 @@ const Main = () => {
     //  }
   };
   useEffect(() => {
-    getChatData();
+    //getChatData();
   }, []);
 
   return (
@@ -221,7 +221,7 @@ const Main = () => {
               width: rightMenuState ? '300px' : '0px',
             }}
           >
-            <Robot />
+            <Robot toggleRightMenu={toggleRightMenu} />
           </div>
         </div>
       </div>
