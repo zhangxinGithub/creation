@@ -42,6 +42,10 @@ const Main = () => {
   const toggleRightMenu = () => {
     setRightMenuState(!rightMenuState);
   };
+  //跳转到AI校对新打开页面
+  const goCheck = () => {
+    window.open('/check');
+  };
   const [editList, setEditList] = useState([
     {
       title: '步骤写作',
@@ -51,7 +55,7 @@ const Main = () => {
     {
       title: 'AI校对',
       icon: checkIcon,
-      callBack: showStepModel,
+      callBack: goCheck,
     },
     {
       title: '妙笔AI',
@@ -59,6 +63,7 @@ const Main = () => {
       callBack: toggleRightMenu,
     },
   ]);
+
   //导出文章
   const exportArticle = () => {
     console.log(html);
