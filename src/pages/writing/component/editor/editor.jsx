@@ -1,19 +1,12 @@
 import '@wangeditor/editor/dist/css/style.css'; // 引入 css
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Editor, Toolbar } from '@wangeditor/editor-for-react';
-import { Boot } from '@wangeditor/editor';
-import ctrlEnterModule from '@wangeditor/plugin-ctrl-enter';
-
-//Boot.registerModule(ctrlEnterModule);
+import WrapperComponent from '@/common/wrapperComponent';
 function MyEditor(props) {
-  // 模拟 ajax 请求，异步设置 html
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setHtml('<p>hello world</p>');
-  //   }, 1500);
-  // }, []);
-
+  const toolbarRef = useRef(null);
+  // 工具栏高度
+  const [toolbarHeight, setToolbarHeight] = useState(80);
   const toolbarConfig = {
     excludeKeys: ['headerSelect', '|'],
   }; // JS 语法
@@ -32,22 +25,37 @@ function MyEditor(props) {
       props.setEditor(null);
     };
   }, [props.editor]);
+  useEffect(() => {
+    if (toolbarRef.current) {
+      const childDOMNode = toolbarRef.current.getDOMNode();
+      //获取高度
+      const height = childDOMNode.offsetHeight;
+      console.log(height); // 打印子组件的DOM节点
+      setToolbarHeight(height);
+    }
+    //获取toolbar高度
+  }, [props.rightMenuState]);
 
   return (
     <>
-      <div>
-        <Toolbar
-          editor={props.editor}
-          defaultConfig={toolbarConfig}
-          mode="default"
-        />
+      <div style={{ height: 'calc(100vh - 150px)' }}>
+        <WrapperComponent ref={toolbarRef}>
+          <Toolbar
+            editor={props.editor}
+            defaultConfig={toolbarConfig}
+            mode="default"
+          />
+        </WrapperComponent>
+
         <Editor
           defaultConfig={editorConfig}
           value={props.html}
           onCreated={props.setEditor}
           onChange={(editor) => props.setHtml(editor.getHtml())}
           mode="default"
-          style={{ height: 'calc(100vh - 142px)', overflowY: 'hidden' }}
+          style={{
+            height: `calc(100% - ${toolbarHeight * 0.3}px)`,
+          }}
         />
       </div>
     </>

@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Radio, Button } from 'antd';
 import Editor from './component/editor/editor';
-import RightBlock from './component/right-block/right-block';
 import stepIcon from '@/assets/img/step.png';
 import aiIcon from '@/assets/img/xiaozhi.png';
 import './index.less';
 import StepModel from './component/step-model/step-model';
 import Robot from './component/robot/robot';
+import Compare from './component/compare/compare';
 import essayIcon from '@/assets/img/essay.png';
 import homeIcon from '@/assets/img/home.png';
 import checkIcon from '@/assets/img/check.png';
@@ -14,15 +14,15 @@ import '@/common/html-docx';
 import FileSaver from 'file-saver';
 import Upload from './component/upload/upload';
 import { docList } from '@/doc/docx';
-import { ajax } from '@/api/ajax';
 
+let compareWidth = 450;
 const Main = () => {
   // editor 实例
   const [editor, setEditor] = useState(null); // JS 语法
   //左侧菜单展示状态
   const [leftMenuState, setLeftMenuState] = useState(false);
   //右侧菜单展示状态
-  const [rightMenuState, setRightMenuState] = useState(false);
+  const [rightMenuState, setRightMenuState] = useState(0);
   // 编辑器内容
   const [html, setHtml] = useState();
   //左侧菜单radio选中值
@@ -39,12 +39,13 @@ const Main = () => {
     setLeftMenuState(!leftMenuState);
   };
   //切换右侧菜单
-  const toggleRightMenu = () => {
-    setRightMenuState(!rightMenuState);
-  };
-  //跳转到AI校对新打开页面
-  const goCheck = () => {
-    window.open('/check');
+  const toggleRightMenu = (width) => {
+    if (width === rightMenuState) {
+      setRightMenuState(0);
+      return;
+    }
+
+    setRightMenuState(width);
   };
   const [editList, setEditList] = useState([
     {
@@ -55,12 +56,16 @@ const Main = () => {
     {
       title: 'AI校对',
       icon: checkIcon,
-      callBack: goCheck,
+      callBack: () => {
+        toggleRightMenu(compareWidth);
+      },
     },
     {
       title: '妙笔AI',
       icon: aiIcon,
-      callBack: toggleRightMenu,
+      callBack: () => {
+        toggleRightMenu(300);
+      },
     },
   ]);
 
@@ -214,6 +219,7 @@ const Main = () => {
           </div>
           <div className="center-body">
             <Editor
+              rightMenuState={rightMenuState}
               editor={editor}
               setEditor={setEditor}
               html={html}
@@ -223,10 +229,14 @@ const Main = () => {
           <div
             className="right-body"
             style={{
-              width: rightMenuState ? '300px' : '0px',
+              width: `${rightMenuState}px`,
             }}
           >
-            <Robot toggleRightMenu={toggleRightMenu} />
+            {rightMenuState === 300 ? (
+              <Robot toggleRightMenu={toggleRightMenu} />
+            ) : rightMenuState === compareWidth ? (
+              <Compare />
+            ) : null}
           </div>
         </div>
       </div>

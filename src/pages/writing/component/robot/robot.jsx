@@ -50,7 +50,9 @@ const Robot = (props, ref) => {
           小智AI
         </div>
         <CloseCircleOutlined
-          onClick={props.toggleRightMenu}
+          onClick={() => {
+            props.toggleRightMenu(0);
+          }}
           style={{ color: '#666', cursor: 'pointer' }}
         />
       </div>
