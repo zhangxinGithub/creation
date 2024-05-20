@@ -14,14 +14,12 @@ const config = {
   },
 };
 const Robot = (props, ref) => {
-  //预览html
-  const [html, setHtml] = useState('');
   const [form] = Form.useForm();
   //文件选择事件
   const fileChange = async (info) => {
     const value = await analysisWord(info.file.originFileObj); //解析word
     console.log('value', value);
-    setHtml(value);
+    props.setHtml(value);
   };
 
   //解析word
@@ -39,15 +37,7 @@ const Robot = (props, ref) => {
       reader.readAsArrayBuffer(file); // 启动读取指定的 Blob 或 File 内容 ：https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsArrayBuffer
     });
   };
-  const highLight = (text, keyword) => {
-    //在text中高亮显示keyword
-    const reg = new RegExp(keyword, 'g');
-    return text.replace(reg, `<span style="color:red">${keyword}</span>`);
-  };
-  const onSearch = (value) => {
-    console.log(value);
-    setHtml(highLight(html, value));
-  };
+
   return (
     <div className="compare">
       <Form
@@ -65,7 +55,9 @@ const Robot = (props, ref) => {
           <Search
             allowClear
             enterButton="检验"
-            onSearch={onSearch}
+            onSearch={(value) => {
+              props.search(value);
+            }}
             style={{ width: 300 }}
           />
         </Form.Item>
@@ -74,7 +66,7 @@ const Robot = (props, ref) => {
         <Button>上传</Button>
       </Upload>
       <div className="doc-page">
-        <div dangerouslySetInnerHTML={{ __html: html }}></div>
+        <div dangerouslySetInnerHTML={{ __html: props.html }}></div>
       </div>
     </div>
   );

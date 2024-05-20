@@ -27,6 +27,8 @@ const Main = () => {
   const [html, setHtml] = useState();
   //左侧菜单radio选中值
   const [radioValue, setRadioValue] = useState('0');
+  //预览html
+  const [preHtml, setPreHtml] = useState('');
   const stepModelRef = useRef({});
   const showStepModel = (params) => {
     if (stepModelRef.current) {
@@ -136,17 +138,23 @@ const Main = () => {
       setHtml(res);
       console.log('res', res);
     }
-    //  if (res.code === 200) {
-    //    dispatch(
-    //      setChatList({
-    //        type: 'robot',
-    //        debuger: false,
-    //        content: JSON.stringify(res.data.cardData),
-    //        id: traceId,
-    //        cardInfo: true,
-    //      })
-    //    );
-    //  }
+  };
+  const highLight = (text, keyword) => {
+    if (!keyword) {
+      //删除所有高亮
+      return text
+        .replace(/<span style="color:red">/g, '')
+        .replace(/<\/span>/g, '');
+    }
+    //在text中高亮显示keyword
+    const reg = new RegExp(keyword, 'g');
+    return text.replace(reg, `<span style="color:red">${keyword}</span>`);
+  };
+  const onSearch = (value) => {
+    console.log(value);
+    let text = highLight(preHtml, value);
+    setPreHtml(text);
+    setHtml(text);
   };
   useEffect(() => {
     //getChatData();
@@ -235,7 +243,7 @@ const Main = () => {
             {rightMenuState === 300 ? (
               <Robot toggleRightMenu={toggleRightMenu} />
             ) : rightMenuState === compareWidth ? (
-              <Compare />
+              <Compare html={preHtml} setHtml={setPreHtml} search={onSearch} />
             ) : null}
           </div>
         </div>
