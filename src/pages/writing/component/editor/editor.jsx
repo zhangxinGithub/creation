@@ -27,7 +27,6 @@ function MyEditor(props) {
       insertFn(url, '图片', url);
     },
   };
-
   // 及时销毁 editor ，重要！
   useEffect(() => {
     return () => {

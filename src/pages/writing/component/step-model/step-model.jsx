@@ -14,6 +14,7 @@ import {
   Divider,
   Input,
   Space,
+  message,
 } from 'antd';
 import { articleType, prompt, prompt1, prompt2 } from './data';
 import './step-model.less';
@@ -169,23 +170,28 @@ const App = (props, ref) => {
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
-    const response = await fetch(
-      'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
-      {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(postData),
+    try {
+      const response = await fetch(
+        'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+        {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(postData),
+        }
+      );
+      console.log('response:', response);
+      //解析非流式返回体
+      const res = await response.json();
+      console.log('res:', res);
+      let { succeed, result } = res;
+      if (succeed) {
+        callBack(result);
       }
-    );
-    console.log('response:', response);
-    //解析非流式返回体
-    const res = await response.json();
-    console.log('res:', res);
-    let { succeed, result } = res;
-    if (succeed) {
-      callBack(result);
+      setLoading(false);
+    } catch (e) {
+      message.error('接口报错');
+      setLoading(false);
     }
-    setLoading(false);
   };
   //上一步
   const prevStep0 = () => {

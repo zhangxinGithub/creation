@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import logo from '@/assets/img/xiaozhilogo.png';
-import { Input } from 'antd';
+import { Input, message } from 'antd';
 import './robot.less';
 import palm from '@/assets/img/palm.png';
 import send from '@/assets/img/send.png';
@@ -10,26 +10,23 @@ const { TextArea } = Input;
 const Robot = (props, ref) => {
   const [writingOptions, setWritingOptions] = useState(0);
   //聊天记录
-  const [chatList, setChatList] = useState([
-    {
-      type: 'user',
-      value: '123123123123',
-    },
-    {
-      type: 'robot',
-      value: '1111111111',
-    },
-  ]);
+  const [chatList, setChatList] = useState([]);
   //输入框信息
   const [inputValue, setInputValue] = useState('');
+  //loading
+  const [loading, setLoading] = useState(false);
+  //定时器
+  let timer = null;
   //发送消息
   const sendMessage = () => {
     console.log('sendMessage');
-    let list = chatList.push({
+    let list = chatList.concat();
+    list.push({
       type: 'user',
       value: inputValue,
     });
     setChatList(list);
+    getChatData(inputValue);
     setInputValue('');
   };
   //选择option
@@ -40,7 +37,69 @@ const Robot = (props, ref) => {
     }
     setWritingOptions(value);
   };
-  //
+  //复制text到剪切板
+  const copyText = (text) => {
+    var input = document.createElement('input');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('Copy');
+    document.body.removeChild(input);
+    message.success('复制成功');
+  };
+  //将文本插入到编辑器中
+  const insertText = (text) => {
+    if (props.html !== '<p><br></p>') {
+      props.setHtml(props.html + `<p>${text}</p>`);
+    } else {
+      props.setHtml(`<p>${text}</p>`);
+    }
+  };
+  //请求数据
+  const getChatData = async (text) => {
+    let postData = {
+      messages: [
+        {
+          role: 'system',
+          content: { text: '你现在是一名经验丰富的公文写作专家，精通中文。' },
+        },
+        {
+          role: 'user',
+          content: { text: text },
+        },
+      ],
+    };
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    const response = await fetch(
+      'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+      {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(postData),
+      }
+    );
+    //流式输出
+    const reader = response.body.getReader();
+    let res = '';
+    let copyChatList = chatList.concat();
+    copyChatList.push({
+      type: 'robot',
+      value: '',
+    });
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+      res += new TextDecoder().decode(value);
+      console.log('res', res);
+      copyChatList[copyChatList.length - 1].value = res;
+      setChatList(copyChatList);
+    }
+  };
 
   return (
     <div className="robot">
@@ -80,10 +139,24 @@ const Robot = (props, ref) => {
           if (item.type === 'robot') {
             return (
               <div className="robot" key={index}>
-                <div className="robot-text">123</div>
+                <div className="robot-text">{item.value}</div>
                 <div className="robot-btns">
-                  <div className="robot-btn">插入左侧</div>
-                  <div className="robot-btn">复制</div>
+                  <div
+                    className="robot-btn"
+                    onClick={() => {
+                      insertText(item.value);
+                    }}
+                  >
+                    插入左侧
+                  </div>
+                  <div
+                    className="robot-btn"
+                    onClick={() => {
+                      copyText(item.value);
+                    }}
+                  >
+                    复制
+                  </div>
                   {chatList.length === index + 1 && (
                     <div className="robot-btn">重新生成</div>
                   )}
@@ -122,7 +195,7 @@ const Robot = (props, ref) => {
             rows={5}
           />
           <div className="textArea-footer">
-            <div className="count">0/400</div>
+            <div className="count">{inputValue.length}/400</div>
             <img src={send} onClick={sendMessage} />
           </div>
         </div>
