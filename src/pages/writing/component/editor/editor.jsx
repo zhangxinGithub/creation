@@ -2,19 +2,30 @@ import '@wangeditor/editor/dist/css/style.css'; // 引入 css
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor, Toolbar } from '@wangeditor/editor-for-react';
+import { DomEditor } from '@wangeditor/editor';
+
 import WrapperComponent from '@/common/wrapperComponent';
 function MyEditor(props) {
   const toolbarRef = useRef(null);
   // 工具栏高度
   const [toolbarHeight, setToolbarHeight] = useState(80);
   const toolbarConfig = {
-    excludeKeys: ['headerSelect', '|'],
+    excludeKeys: ['headerSelect', '|', 'group-video'],
   }; // JS 语法
-
   // 编辑器配置
   const editorConfig = {
     // JS 语法
     placeholder: '请在此输入内容,选择右侧AI功能可辅助您快速写作',
+    MENU_CONF: {},
+  };
+  editorConfig.MENU_CONF['uploadImage'] = {
+    async customUpload(file, insertFn) {
+      //获取本地图片地址
+      const url = URL.createObjectURL(file);
+      console.log('url', url); // JS 语法
+
+      insertFn(url, '图片', url);
+    },
   };
 
   // 及时销毁 editor ，重要！
@@ -35,6 +46,11 @@ function MyEditor(props) {
     }
     //获取toolbar高度
   }, [props.rightMenuState]);
+  useEffect(() => {
+    const toolbar = DomEditor.getToolbar(props.editor);
+    //const curToolbarConfig = toolbar.getConfig();
+    console.log(toolbar); // 当前菜单排序和分组
+  }, [props.editor]);
 
   return (
     <>

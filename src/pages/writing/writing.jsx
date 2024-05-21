@@ -22,7 +22,7 @@ const Main = () => {
   //左侧菜单展示状态
   const [leftMenuState, setLeftMenuState] = useState(false);
   //右侧菜单展示状态
-  const [rightMenuState, setRightMenuState] = useState(0);
+  const [rightMenuWidth, setRightMenuState] = useState(0);
   // 编辑器内容
   const [html, setHtml] = useState();
   //左侧菜单radio选中值
@@ -42,14 +42,13 @@ const Main = () => {
   };
   //切换右侧菜单
   const toggleRightMenu = (width) => {
-    if (width === rightMenuState) {
+    if (width === rightMenuWidth) {
       setRightMenuState(0);
-      return;
+    } else {
+      setRightMenuState(width);
     }
-
-    setRightMenuState(width);
   };
-  const [editList, setEditList] = useState([
+  const editList = [
     {
       title: '步骤写作',
       icon: stepIcon,
@@ -59,6 +58,7 @@ const Main = () => {
       title: 'AI校对',
       icon: checkIcon,
       callBack: () => {
+        console.log('AI校对', rightMenuWidth);
         toggleRightMenu(compareWidth);
       },
     },
@@ -69,11 +69,10 @@ const Main = () => {
         toggleRightMenu(300);
       },
     },
-  ]);
+  ];
 
   //导出文章
   const exportArticle = () => {
-    console.log(html);
     exportToDocx(html);
   };
 
@@ -152,13 +151,9 @@ const Main = () => {
   };
   const onSearch = (value) => {
     console.log(value);
-    let text = highLight(preHtml, value);
-    setPreHtml(text);
-    setHtml(text);
+    setPreHtml(highLight(preHtml, value));
+    setHtml(highLight(html, value));
   };
-  useEffect(() => {
-    //getChatData();
-  }, []);
 
   return (
     <div className="writing">
@@ -227,7 +222,7 @@ const Main = () => {
           </div>
           <div className="center-body">
             <Editor
-              rightMenuState={rightMenuState}
+              rightMenuState={rightMenuWidth}
               editor={editor}
               setEditor={setEditor}
               html={html}
@@ -237,12 +232,12 @@ const Main = () => {
           <div
             className="right-body"
             style={{
-              width: `${rightMenuState}px`,
+              width: `${rightMenuWidth}px`,
             }}
           >
-            {rightMenuState === 300 ? (
+            {rightMenuWidth === 300 ? (
               <Robot toggleRightMenu={toggleRightMenu} />
-            ) : rightMenuState === compareWidth ? (
+            ) : rightMenuWidth === compareWidth ? (
               <Compare html={preHtml} setHtml={setPreHtml} search={onSearch} />
             ) : null}
           </div>
