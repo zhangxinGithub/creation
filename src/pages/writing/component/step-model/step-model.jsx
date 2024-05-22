@@ -22,6 +22,7 @@ import OverviewTable from '../overview-table/overview-table';
 import { RedoOutlined, SyncOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
+let stop = false;
 
 const App = (props, ref) => {
   //loading状态
@@ -136,7 +137,21 @@ const App = (props, ref) => {
         });
       });
     }
+    if (current === 2) {
+      //开始写作
+      props.setGlobalLoading(true);
+      //关闭弹窗
+      hideModal();
+      //清空编辑器内容
+      props.setHtml('');
+    }
   };
+  useEffect(() => {
+    stop = props.globalLoading;
+    if (props.globalLoading) {
+      startWriting();
+    }
+  }, [props.globalLoading]);
   //换一批
   const redoOutline = () => {
     generateSummary(prompt1, summaryStr, (result) => {
@@ -144,7 +159,7 @@ const App = (props, ref) => {
       setOutlineData(result[0].content.text);
     });
   };
-  //模型生成摘要信息
+  //模型生成摘要信息&&大纲
   const generateSummary = async (promptObj, data, callBack) => {
     setLoading(true);
     console.log('data:', data);
@@ -191,6 +206,65 @@ const App = (props, ref) => {
     } catch (e) {
       message.error('接口报错');
       setLoading(false);
+    }
+  };
+  //开始写作接口
+  const startWriting = async () => {
+    let pageType = baseForm.getFieldValue('pageType');
+    let postData = {
+      messages: [
+        {
+          role: 'SYSTEM',
+          content: {
+            text: prompt2.system,
+          },
+        },
+        {
+          role: 'USER',
+          content: {
+            text:
+              prompt2.user[pageType] +
+              summaryStr +
+              '【大纲信息】=' +
+              outlineData,
+          },
+        },
+      ],
+    };
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    try {
+      const response = await fetch(
+        'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+        {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(postData),
+        }
+      );
+      //流式输出
+      const reader = response.body.getReader();
+      let res = '';
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+        console.log('stop', stop);
+        if (!stop) {
+          break;
+        }
+        res += new TextDecoder().decode(value);
+        console.log('res', res);
+        //同时出现两个换行符则删除一个
+        res = res.replace(/\n\n/g, '\n');
+        props.setHtml(res);
+      }
+    } catch (e) {
+      message.error('接口报错');
+      props.setGlobalLoading(false);
     }
   };
   //上一步

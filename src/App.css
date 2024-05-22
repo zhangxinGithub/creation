@@ -55,6 +55,9 @@ ul {
 strong {
   font-weight: bolder;
 }
+p {
+  margin: 0;
+}
 
 .logo {
   height: 6em;

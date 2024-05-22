@@ -1,6 +1,22 @@
 .writing {
   position: relative;
   font-size: 12px;
+  .global-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    .virtual-btn {
+      position: absolute;
+      width: 80px;
+      cursor: pointer;
+      height: 30px;
+      right: 120px;
+      top: 10px;
+    }
+  }
   .left-menu {
     position: fixed;
     top: 7.5px;

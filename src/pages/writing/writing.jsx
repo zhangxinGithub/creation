@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Radio, Button } from 'antd';
+import { Radio, Button, Space } from 'antd';
 import Editor from './component/editor/editor';
 import stepIcon from '@/assets/img/step.png';
 import aiIcon from '@/assets/img/xiaozhi.png';
@@ -30,6 +30,8 @@ const Main = () => {
   //预览html
   const [preHtml, setPreHtml] = useState('');
   const stepModelRef = useRef({});
+  //全局loading
+  const [globalLoading, setGlobalLoading] = useState(false);
   const showStepModel = (params) => {
     if (stepModelRef.current) {
       console.log(stepModelRef.current);
@@ -118,6 +120,22 @@ const Main = () => {
 
   return (
     <div className="writing">
+      {globalLoading && (
+        <div
+          className="global-loading"
+          onClick={(e) => {
+            //禁止冒泡
+            e.stopPropagation();
+          }}
+        >
+          <div
+            className="virtual-btn"
+            onClick={() => {
+              setGlobalLoading(false);
+            }}
+          ></div>
+        </div>
+      )}
       <div className="left-menu">
         <div>
           <img src={homeIcon} />
@@ -131,9 +149,12 @@ const Main = () => {
       <div className="container">
         <div className="top-bar">
           <div>编辑文档</div>
-          <Button type="primary" onClick={exportArticle}>
-            文章导出
-          </Button>
+          <Space>
+            {globalLoading && <Button danger>放弃生成</Button>}
+            <Button type="primary" onClick={exportArticle}>
+              文章导出
+            </Button>
+          </Space>
         </div>
         <div className="content">
           <div
@@ -223,7 +244,12 @@ const Main = () => {
         ))}
       </div>
       {/* <RightBlock /> */}
-      <StepModel ref={stepModelRef} />
+      <StepModel
+        ref={stepModelRef}
+        setHtml={setHtml}
+        setGlobalLoading={setGlobalLoading}
+        globalLoading={globalLoading}
+      />
     </div>
   );
 };
