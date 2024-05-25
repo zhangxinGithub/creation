@@ -85,7 +85,7 @@ const App = (props, ref) => {
     baseForm.setFieldValue('pageClass', list.articleClass[0].name);
     //写作场景赋值
     setSceneList(list.articleClass[0].scene);
-    baseForm.setFieldValue('scene', [list.articleClass[0].scene[0]]);
+    baseForm.setFieldValue('scene', [list.articleClass[0].scene[0].value]);
     //补充信息赋值
     const obj = {};
     list.articleClass[0].info.forEach((item) => {
@@ -107,14 +107,14 @@ const App = (props, ref) => {
     list.info.forEach((item) => {
       obj[item.label] = item.value;
     });
-    baseForm.setFieldsValue({ ...obj, scene: [list.scene[0]] });
+    baseForm.setFieldsValue({ ...obj, scene: [list.scene[0].value] });
   };
   //获取baseForm信息返回字符串
   const getBaseFormInfo = async () => {
     let str = '';
     await baseForm.validateFields().then((values) => {
       console.log('values:', values);
-      console.log('infoList:', infoList);
+      console.log('values.scene:', values.scene);
       //提取infoList中的label
       const obj = [];
       infoList.map((item) => {
@@ -122,9 +122,9 @@ const App = (props, ref) => {
       });
       str = `###用户输入内容 【稿件分类】=${values.pageType} 【稿件类型】=${
         values.pageClass
-      } 【写作场景】=${values.scene} 【字数】=${values.count} ${obj.join(
-        '\n'
-      )}`;
+      } 【写作场景】=${values.scene.join('，')} 【字数】=${
+        values.count
+      } ${obj.join('\n')}`;
     });
     await setFormStr(str);
     return str;
@@ -191,7 +191,7 @@ const App = (props, ref) => {
         {
           role: 'USER',
           content: {
-            text: promptObj.user + data,
+            text: promptObj.user + data + promptObj.end,
           },
         },
       ],
@@ -248,6 +248,7 @@ const App = (props, ref) => {
         },
       ],
     };
+    console.log('postData:', postData);
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
@@ -550,7 +551,7 @@ const App = (props, ref) => {
             ]}
           >
             <div>
-              <OverviewTable data={outlineData} />
+              <OverviewTable data={outlineData} prevStep1={prevStep1} />
               <div className="redoOut" onClick={redoOutline}>
                 <RedoOutlined style={{ marginRight: '4px' }} />
                 换一批

@@ -16,6 +16,8 @@ import Upload from './component/upload/upload';
 import { docList } from '@/doc/docx';
 
 let compareWidth = 450;
+//保存高亮前的html
+let htmlCopy = '';
 const Main = () => {
   // editor 实例
   const [editor, setEditor] = useState(null); // JS 语法
@@ -32,6 +34,9 @@ const Main = () => {
   const stepModelRef = useRef({});
   //全局loading
   const [globalLoading, setGlobalLoading] = useState(false);
+
+  const [preHtmlCopy, setPreHtmlCopy] = useState('');
+
   const showStepModel = (params) => {
     if (stepModelRef.current) {
       console.log(stepModelRef.current);
@@ -61,6 +66,7 @@ const Main = () => {
       icon: checkIcon,
       callBack: () => {
         console.log('AI校对', rightMenuWidth);
+        htmlCopy = html;
         toggleRightMenu(compareWidth);
       },
     },
@@ -99,20 +105,21 @@ const Main = () => {
     FileSaver.saveAs(converted, fileName);
   };
   const highLight = (text, keyword) => {
-    if (!keyword) {
-      //删除所有高亮
-      return text
-        .replace(/<span style="color:red">/g, '')
-        .replace(/<\/span>/g, '');
-    }
     //在text中高亮显示keyword
     const reg = new RegExp(keyword, 'g');
-    return text.replace(reg, `<span style="color:red">${keyword}</span>`);
+    return text.replace(reg, `<b   style="color:red">${keyword}</b>`);
   };
   const onSearch = (value) => {
     console.log(value);
-    setPreHtml(highLight(preHtml, value));
-    setHtml(highLight(html, value));
+    if (!value) {
+      setHtml(htmlCopy);
+      setPreHtml(preHtmlCopy);
+      return;
+    }
+    let str = htmlCopy;
+    let str1 = preHtmlCopy;
+    setHtml(highLight(str, value));
+    setPreHtml(highLight(str1, value));
   };
 
   return (
@@ -221,7 +228,13 @@ const Main = () => {
                 toggleRightMenu={toggleRightMenu}
               />
             ) : rightMenuWidth === compareWidth ? (
-              <Compare html={preHtml} setHtml={setPreHtml} search={onSearch} />
+              <Compare
+                html={preHtml}
+                preHtmlCopy={preHtmlCopy}
+                setPreHtmlCopy={setPreHtmlCopy}
+                setHtml={setPreHtml}
+                search={onSearch}
+              />
             ) : null}
           </div>
         </div>

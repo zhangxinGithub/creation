@@ -20,6 +20,7 @@ const Robot = (props, ref) => {
     const value = await analysisWord(info.file.originFileObj); //解析word
     console.log('value', value);
     props.setHtml(value);
+    props.setPreHtmlCopy(value);
   };
 
   //解析word

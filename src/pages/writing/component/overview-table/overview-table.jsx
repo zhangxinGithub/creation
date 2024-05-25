@@ -57,7 +57,9 @@ const Robot = (props, ref) => {
       jsonObj = JSON.parse(jsonStr);
     } catch (e) {
       message.error('json格式错误');
-      console.log(e);
+      //返回上一步
+      props.setStep(1);
+      return;
     }
     //title是大纲的标题,sub是大纲的小节,subTitle是小节的标题,jsonObj
     let tableData = [];
