@@ -114,9 +114,6 @@ const Main = () => {
     setPreHtml(highLight(preHtml, value));
     setHtml(highLight(html, value));
   };
-  useEffect(() => {
-    console.log('html', html);
-  }, [html]);
 
   return (
     <div className="writing">

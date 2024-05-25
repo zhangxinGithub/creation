@@ -2,9 +2,9 @@ import '@wangeditor/editor/dist/css/style.css'; // 引入 css
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor, Toolbar } from '@wangeditor/editor-for-react';
-import { DomEditor } from '@wangeditor/editor';
-
+import { DomEditor, Boot } from '@wangeditor/editor';
 import WrapperComponent from '@/common/wrapperComponent';
+
 function MyEditor(props) {
   const toolbarRef = useRef(null);
   // 工具栏高度

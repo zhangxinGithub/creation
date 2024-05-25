@@ -20,6 +20,7 @@ import { articleType, prompt, prompt1, prompt2 } from './data';
 import './step-model.less';
 import OverviewTable from '../overview-table/overview-table';
 import { RedoOutlined, SyncOutlined } from '@ant-design/icons';
+import { find } from 'lodash';
 
 const { TextArea } = Input;
 let stop = false;
@@ -78,19 +79,35 @@ const App = (props, ref) => {
   const typeChange = (e) => {
     console.log('typeChange:', e.target.value);
     const type = e.target.value;
-    const list = articleType.find((item) => item.id === type);
+    const list = articleType.find((item) => item.name === type);
     console.log('articleClass:', list);
     setArticleClassList(list.articleClass);
-    baseForm.setFieldValue('pageClass', list.articleClass[0].id);
+    baseForm.setFieldValue('pageClass', list.articleClass[0].name);
+    //写作场景赋值
+    setSceneList(list.articleClass[0].scene);
+    baseForm.setFieldValue('scene', [list.articleClass[0].scene[0]]);
+    //补充信息赋值
+    const obj = {};
+    list.articleClass[0].info.forEach((item) => {
+      obj[item.label] = item.value;
+    });
+    setInfoList(list.articleClass[0].info);
+    baseForm.setFieldsValue(obj);
   };
   //稿件类型变化
   const classChange = (e) => {
     console.log('classChange:', e.target.value);
     const type = e.target.value;
-    const list = articleClassList.find((item) => item.id === type);
+    const list = find(articleClassList, { name: type });
     console.log('sceneList:', list);
     setSceneList(list.scene);
     setInfoList(list.info);
+    //给表单中补充信息赋值
+    const obj = {};
+    list.info.forEach((item) => {
+      obj[item.label] = item.value;
+    });
+    baseForm.setFieldsValue({ ...obj, scene: [list.scene[0]] });
   };
   //获取baseForm信息返回字符串
   const getBaseFormInfo = async () => {
@@ -246,21 +263,23 @@ const App = (props, ref) => {
       //流式输出
       const reader = response.body.getReader();
       let res = '';
+      let el = document.getElementById('w-e-textarea-1');
       while (true) {
         const { done, value } = await reader.read();
-
+        console.log('done', done);
         if (done) {
+          props.setGlobalLoading(false);
           break;
         }
-        console.log('stop', stop);
         if (!stop) {
           break;
         }
         res += new TextDecoder().decode(value);
-        console.log('res', res);
         //同时出现两个换行符则删除一个
         res = res.replace(/\n\n/g, '\n');
         props.setHtml(res);
+        //滚动到底部
+        el.scrollTop = el.scrollHeight;
       }
     } catch (e) {
       message.error('接口报错');
@@ -310,9 +329,6 @@ const App = (props, ref) => {
     });
     baseForm.setFieldsValue(obj);
   }, []);
-  useEffect(() => {
-    console.log('infoList:', infoList);
-  }, [infoList]);
 
   return (
     <Modal

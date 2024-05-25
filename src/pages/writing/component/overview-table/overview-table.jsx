@@ -1,53 +1,74 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
-import { Input } from 'antd';
+import { Input, message } from 'antd';
 import './overview-table.less';
 import { DeleteOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 
 const Robot = (props, ref) => {
   //表格数据
-  const [tableData, setTableData] = useState([
-    // {
-    //   title: '一、工作开展情况与成果',
-    //   children: [
-    //     '校园暴力预防与处理',
-    //     '食品安全监管与改进',
-    //     '网络沉迷干预与教育',
-    //   ],
-    // },
-    // {
-    //   title: '二、存在问题与反思',
-    //   children: [
-    //     '校园暴力问题的根源与解决策略',
-    //     '食品安全问题的挑战与应对措施',
-    //     '网络沉迷问题的现状与改进方向',
-    //   ],
-    // },
-  ]);
+  const [tableData, setTableData] = useState([]);
+  //移动小节
+  const moveSection = (index, childIndex, type) => {
+    let newTableData = JSON.parse(JSON.stringify(tableData));
+    let currentSection = newTableData[index].children[childIndex];
+    if (type === 'up' && childIndex === 0) {
+      return;
+    }
+    if (
+      type === 'down' &&
+      childIndex === newTableData[index].children.length - 1
+    ) {
+      return;
+    }
+    let targetIndex = type === 'up' ? childIndex - 1 : childIndex + 1;
+    newTableData[index].children[childIndex] =
+      newTableData[index].children[targetIndex];
+    newTableData[index].children[targetIndex] = currentSection;
+    setTableData(newTableData);
+  };
+  //删除小节
+  const deleteSection = (index, childIndex) => {
+    let newTableData = JSON.parse(JSON.stringify(tableData));
+    newTableData[index].children.splice(childIndex, 1);
+    setTableData(newTableData);
+  };
+  //添加小节
+  const addSection = (index) => {
+    let newTableData = JSON.parse(JSON.stringify(tableData));
+    newTableData[index].children.push('');
+    setTableData(newTableData);
+  };
   useEffect(() => {
-    //根据'/n'分割字符串,正则判断如果开头是以一、二、三、四、五、六、七、八、九、十开头的,则为大纲标题,否则为大纲内容,将大纲内容添加到对应的大纲标题下
-    let data = props.data;
-    let arr = data.split('\n');
+    let jsonStr = '';
+    //如果没有正则出json```则跳过后面方法
+    if (!props.data.match(/```json/)) {
+      jsonStr = props.data;
+    } else {
+      //正则出json```主题内容```格式的数据
+      let reg = /```([\s\S]*?)```/g;
+      let json = props.data.match(reg);
+      //删除'json```'和'```'字符
+      jsonStr = json[0].replace(/```json/g, '').replace(/```/g, '');
+      //删除开头的换行符
+      jsonStr = jsonStr.replace(/^\n/, '');
+      //将json字符串转换为json对象
+    }
+    let jsonObj = {};
+    try {
+      jsonObj = JSON.parse(jsonStr);
+    } catch (e) {
+      message.error('json格式错误');
+      console.log(e);
+    }
+    //title是大纲的标题,sub是大纲的小节,subTitle是小节的标题,jsonObj
     let tableData = [];
-    let title = '';
-    let children = [];
-    arr.map((item) => {
-      if (/^[\u4e00-\u9fa5]{1,2}、/.test(item)) {
-        if (title) {
-          tableData.push({ title, children });
-        }
-        title = item;
-        children = [];
-      } else {
-        //如果是空行,则不添加
-        if (item === '') {
-          return;
-        }
-        //删除item中的1. 2. 3. 4. 5. 6. 7. 8. 9. 10.等
-        item = item.replace(/^\d+.\s/, '');
-        children.push(item);
-      }
+    jsonObj.sub.map((item) => {
+      let title = item.subTitle;
+      let children = [];
+      item.subSub.map((subItem) => {
+        children.push(subItem);
+      });
+      tableData.push({ title, children });
     });
-    tableData.push({ title, children });
     setTableData(tableData);
   }, [props.data]);
 
@@ -88,19 +109,32 @@ const Robot = (props, ref) => {
                         </div>
                         <div style={{ width: '50px', textAlign: 'center' }}>
                           <DeleteOutlined
+                            onClick={() => deleteSection(index, childIndex)}
                             style={{ color: '#165dff', cursor: 'pointer' }}
                           />
                         </div>
                         <div style={{ width: '100px', textAlign: 'center' }}>
                           <UpOutlined
+                            onClick={() => moveSection(index, childIndex, 'up')}
                             style={{ marginRight: '8px', cursor: 'pointer' }}
                           />
-                          <DownOutlined style={{ cursor: 'pointer' }} />
+                          <DownOutlined
+                            onClick={() =>
+                              moveSection(index, childIndex, 'down')
+                            }
+                            style={{ cursor: 'pointer' }}
+                          />
                         </div>
                       </div>
                     );
                   })}
-                  <div className="add-item">+添加</div>
+                  <div
+                    className="add-item"
+                    onClick={() => addSection(index)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    +添加
+                  </div>
                 </div>
               </div>
             );
