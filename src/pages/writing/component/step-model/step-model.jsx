@@ -247,6 +247,9 @@ const App = (props, ref) => {
           },
         },
       ],
+      modelConfig: {
+        stream: true,
+      },
     };
     console.log('postData:', postData);
     const headers = new Headers({
@@ -264,7 +267,7 @@ const App = (props, ref) => {
       //流式输出
       const reader = response.body.getReader();
       let res = '';
-      let el = document.getElementById('w-e-textarea-1');
+      //let el = document.getElementById('w-e-textarea-1');
       while (true) {
         const { done, value } = await reader.read();
         console.log('done', done);
@@ -276,11 +279,12 @@ const App = (props, ref) => {
           break;
         }
         res += new TextDecoder().decode(value);
-        //同时出现两个换行符则删除一个
-        res = res.replace(/\n\n/g, '\n');
+        console.log('res', res);
+        //删除res中'data:'
+        res = res.replace(/data:/g, '');
+        //删除res中的换行符
+        res = res.replace(/\n/g, '');
         props.setHtml(res);
-        //滚动到底部
-        el.scrollTop = el.scrollHeight;
       }
     } catch (e) {
       message.error('接口报错');

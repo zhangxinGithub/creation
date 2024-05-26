@@ -24,7 +24,7 @@ const Main = () => {
   //左侧菜单展示状态
   const [leftMenuState, setLeftMenuState] = useState(false);
   //右侧菜单展示状态
-  const [rightMenuWidth, setRightMenuState] = useState(0);
+  const [rightMenuWidth, setRightMenuState] = useState(300);
   // 编辑器内容
   const [html, setHtml] = useState();
   //左侧菜单radio选中值

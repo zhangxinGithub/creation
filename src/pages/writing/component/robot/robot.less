@@ -1,9 +1,13 @@
 .robot {
   padding: 0 15px;
+  .a-action {
+    color: #165dff;
+  }
   .robot-text {
     background: #fff;
     border-radius: 0 10px 10px 10px;
     padding: 13px;
+    line-height: 16px;
   }
   .robot-btns {
     display: flex;
@@ -71,7 +75,7 @@
       .info-body {
         color: #767676;
         margin-top: 8px;
-        line-height: 14px;
+        line-height: 16px;
       }
     }
     .user {
@@ -93,19 +97,33 @@
     .writing-options {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 5px;
-      > div {
-        background: #dfeefc;
-        border: none;
-        border-radius: 5px;
-        margin-right: 5px;
-        padding: 5px 4px;
-        color: #606266;
-        cursor: pointer;
+      .options-left {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+        .option-btn {
+          background: #dfeefc;
+          border: none;
+          border-radius: 5px;
+          margin-right: 5px;
+          padding: 5px 4px;
+          color: #606266;
+          cursor: pointer;
+        }
+        .action {
+          background: #165dff;
+          color: #fff;
+        }
       }
-      .action {
-        background: #165dff;
-        color: #fff;
+
+      .document-upload {
+        padding-left: 4px;
+        font-size: 10px;
+        .page-list {
+          width: 150px;
+        }
       }
     }
     .textArea-body {
@@ -125,10 +143,6 @@
       .footer-left {
         display: flex;
         align-items: center;
-        .document-upload {
-          padding-left: 4px;
-          font-size: 10px;
-        }
       }
       img {
         width: 16px;
