@@ -123,6 +123,28 @@
         font-size: 10px;
         .page-list {
           width: 150px;
+          font-size: 10px;
+          .table-hr {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+          }
+          .table-th {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e6effa;
+            color: #767676;
+            > div {
+              //超出部分省略号
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            //最后一个不显示
+            &:last-child {
+              border-bottom: none;
+            }
+          }
         }
       }
     }

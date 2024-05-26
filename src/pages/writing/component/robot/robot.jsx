@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import logo from '@/assets/img/xiaozhilogo.png';
-import { Input, message, Upload, Button, Popover, Dropdown } from 'antd';
+import { Input, message, Upload, Button, Popover, Dropdown, Modal } from 'antd';
 import './robot.less';
 import palm from '@/assets/img/palm.png';
 import send from '@/assets/img/send.png';
-import axios from 'axios';
 import {
   CloseCircleOutlined,
   UploadOutlined,
   FileTextOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
-import { cloneDeep, set } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { writingAssistant } from '../step-model/data';
 
 const { TextArea } = Input;
@@ -24,6 +24,10 @@ const config = {
 
 let typeArr = ['汇报类', '调研类', '规划类', '方案类', '讲话类', '演讲类'];
 const Robot = (props, ref) => {
+  const [open, setOpen] = useState(false);
+  //已经上传文件的列表
+  const [fileList, setFileList] = useState([]);
+
   const [writingOptions, setWritingOptions] = useState(0);
   //聊天记录
   const [chatList, setChatList] = useState([]);
@@ -35,6 +39,11 @@ const Robot = (props, ref) => {
   const [writingType, setWritingType] = useState('');
   //发送消息
   const sendMessage = () => {
+    //如果没有上传文件禁止使用rag
+    if (writingOptions === 2 && fileList.length === 0) {
+      message.error('请先上传文件');
+      return;
+    }
     let list = chatList.concat();
     list.push({
       type: 'USER',
@@ -42,15 +51,28 @@ const Robot = (props, ref) => {
     });
     console.log('list', list);
     setChatList(list);
-    setInputValue('');
   };
   //选择option
   const selectOption = (value) => {
-    if (value === writingOptions) {
-      setWritingOptions(0);
-      return;
+    const okCallback = () => {
+      setChatList([]);
+      if (value === writingOptions) {
+        setWritingOptions(0);
+        return;
+      }
+      setWritingOptions(value);
+    };
+    if (chatList.length > 0) {
+      Modal.info({
+        title: '提示',
+        content: '切换状态会清空聊天记录，是否继续？',
+        onOk() {
+          okCallback();
+        },
+      });
+    } else {
+      okCallback();
     }
-    setWritingOptions(value);
   };
   //复制text到剪切板
   const copyText = (text) => {
@@ -114,10 +136,6 @@ const Robot = (props, ref) => {
         content: { text: item.value },
       });
     });
-    postData.messages.push({
-      role: 'USER',
-      content: { text: text },
-    });
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
@@ -155,43 +173,124 @@ const Robot = (props, ref) => {
       el.scrollTop = el.scrollHeight;
     }
   };
+  //RAG检索
+  const getRagData = async (text) => {
+    console.log('text', text);
+    let el = document.getElementById('middle-scroll');
+    let postData = {
+      documentIds: [],
+      text: text,
+      modelConfig: {
+        stream: true,
+      },
+    };
+    postData.documentIds = fileList.map((item) => {
+      return item.response.payload[0].id;
+    });
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    let resList = '';
+    let copyChatList = cloneDeep(chatList);
+    copyChatList.push({
+      type: 'ASSISTANT',
+      value: '',
+    });
+    setChatList(copyChatList);
+    const response = await fetch('http://ais.fxincen.top:8030/aikb/v1/search', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(postData),
+    });
+    //流式输出
+    const reader = response.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      //解析对象
+      let res = new TextDecoder().decode(value);
+      if (res && res !== ' ') {
+        //删除res中'data:'
+        res = res.replace(/data:/g, '');
+        console.log('res', res);
+        let resObj = JSON.parse(res);
+        console.log('resObj', resObj);
+        let obj = cloneDeep(copyChatList);
+        if (resObj.type === 'MESSAGE') {
+          resList += resObj.body;
+          obj = cloneDeep(copyChatList);
+          obj[obj.length - 1].value = resList;
+          setChatList(obj);
+          el.scrollTop = el.scrollHeight;
+        }
+      }
+
+      // let obj = cloneDeep(copyChatList);
+      // if (resObj.type === 'MESSAGE') {
+      //   obj = cloneDeep(copyChatList);
+      //   obj[obj.length - 1].value = resObj.body;
+      //   setChatList(obj);
+      //   el.scrollTop = el.scrollHeight;
+      // }
+    }
+  };
   //文档上传
-  const handleUpload = async (file) => {
-    let formData = new FormData();
-    formData.append('documentList', file);
-    try {
-      const res = await axios.post('/nbi/crm/sub/attachFile/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log('res', res);
-    } catch (error) {
-      s;
-      console.log('error', error);
+  const upLoadChange = (info) => {
+    console.log('info', info);
+    //如果上传成功,则保存到fileList中
+    if (info.file.status === 'done') {
+      let list = fileList.concat();
+      list.push(info.file);
+      //只保留最后5个文件
+      if (list.length > 5) {
+        list = list.slice(-5);
+      }
+      setFileList(list);
     }
   };
   const content = (
     <div className="page-list">
       <div className="table-hr">
-        <div>名称</div>
-        <div>切换是否完成</div>
+        <div style={{ width: '80px' }}>名称</div>
+        <div style={{ width: '40px', paddingLeft: '4px' }}>状态</div>
         <div>删除</div>
       </div>
-      <div className="table-th">
-        <div>文件1</div>
-        <div>文件1</div>
-        <div>文件1</div>
-      </div>
+      {fileList.map((item, index) => {
+        return (
+          <div key={index} className="table-th">
+            <div style={{ width: '80px' }}>{item.name}</div>
+            <div style={{ width: '40px', paddingLeft: '4px' }}>切片中</div>
+            <div>
+              <CloseOutlined
+                style={{ color: 'red', cursor: 'pointer' }}
+                onClick={() => {
+                  let list = fileList.concat();
+                  list.splice(index, 1);
+                  setFileList(list);
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
   //监听chatList
   useEffect(() => {
+    console.log('inputValue', inputValue);
     if (chatList.length > 0) {
       let last = chatList[chatList.length - 1];
       if (last.type === 'USER') {
         //请求数据
-        getChatData(inputValue);
+        if (writingOptions === 2) {
+          getRagData(inputValue);
+        } else {
+          getChatData(inputValue);
+        }
         //删除输入框内容
         setInputValue('');
       }
@@ -204,7 +303,6 @@ const Robot = (props, ref) => {
       setFileStatus(false);
     }
   }, [writingOptions]);
-  useEffect(() => {}, []);
 
   return (
     <div className="robot">
@@ -309,12 +407,17 @@ const Robot = (props, ref) => {
           </div>
           {fileStatus && (
             <div className="document-upload">
-              <Upload {...config}>
+              <Upload {...config} onChange={upLoadChange}>
                 <Button type="text" size="small" icon={<UploadOutlined />}>
                   文件上传
                 </Button>
               </Upload>
-              <Popover content={content} trigger="click">
+              <Popover
+                content={content}
+                trigger="click"
+                open={open}
+                onOpenChange={setOpen}
+              >
                 <FileTextOutlined
                   style={{
                     color: '#5c8bf7',
