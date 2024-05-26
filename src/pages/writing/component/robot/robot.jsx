@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import logo from '@/assets/img/xiaozhilogo.png';
-import { Input, message } from 'antd';
+import { Input, message, Upload, Button } from 'antd';
 import './robot.less';
 import palm from '@/assets/img/palm.png';
 import send from '@/assets/img/send.png';
-import { CloseCircleOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import { CloseCircleOutlined, UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 const Robot = (props, ref) => {
@@ -73,7 +74,7 @@ const Robot = (props, ref) => {
       'Content-Type': 'application/json',
     });
     const response = await fetch(
-      'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+      'http://ais.fxincen.top:8030/aikb/v1/chat/sessionless',
       {
         method: 'POST',
         headers: headers,
@@ -98,6 +99,22 @@ const Robot = (props, ref) => {
       console.log('res', res);
       copyChatList[copyChatList.length - 1].value = res;
       setChatList(copyChatList);
+    }
+  };
+  //文档上传
+  const handleUpload = async (file) => {
+    let formData = new FormData();
+    formData.append('documentList', file);
+    try {
+      const res = await axios.post('/nbi/crm/sub/attachFile/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('res', res);
+    } catch (error) {
+      s;
+      console.log('error', error);
     }
   };
 
@@ -195,7 +212,16 @@ const Robot = (props, ref) => {
             rows={5}
           />
           <div className="textArea-footer">
-            <div className="count">{inputValue.length}/400</div>
+            <div className="footer-left">
+              <div className="count">{inputValue.length}/400</div>
+              <div className="document-upload">
+                <Upload>
+                  <Button type="text" size="small" icon={<UploadOutlined />}>
+                    文件上传
+                  </Button>
+                </Upload>
+              </div>
+            </div>
             <img src={send} onClick={sendMessage} />
           </div>
         </div>

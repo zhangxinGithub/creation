@@ -58,7 +58,7 @@ const Robot = (props, ref) => {
     } catch (e) {
       message.error('json格式错误');
       //返回上一步
-      props.setStep(1);
+      props.prevStep1(1);
       return;
     }
     //title是大纲的标题,sub是大纲的小节,subTitle是小节的标题,jsonObj

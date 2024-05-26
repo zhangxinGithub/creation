@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Radio, Button, Space } from 'antd';
+import { Radio, Button, Space, message } from 'antd';
 import Editor from './component/editor/editor';
 import stepIcon from '@/assets/img/step.png';
 import aiIcon from '@/assets/img/xiaozhi.png';
@@ -65,7 +65,11 @@ const Main = () => {
       title: 'AI校对',
       icon: checkIcon,
       callBack: () => {
-        console.log('AI校对', rightMenuWidth);
+        console.log('AI校对', html);
+        if (html === '<p><br></p>') {
+          message.info('校对前请先编写文章');
+          return;
+        }
         htmlCopy = html;
         toggleRightMenu(compareWidth);
       },

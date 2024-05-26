@@ -204,7 +204,7 @@ const App = (props, ref) => {
     });
     try {
       const response = await fetch(
-        'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+        'http://ais.fxincen.top:8030/aikb/v1/chat/sessionless',
         {
           method: 'POST',
           headers: headers,
@@ -254,7 +254,7 @@ const App = (props, ref) => {
     });
     try {
       const response = await fetch(
-        'http://ais.fxincen.top:8090/aikb/algorithm/stream/chat',
+        'http://ais.fxincen.top:8030/aikb/v1/chat/sessionless',
         {
           method: 'POST',
           headers: headers,
