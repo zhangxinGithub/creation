@@ -4,11 +4,9 @@ import './overview-table.less';
 import { DeleteOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 
 const Robot = (props, ref) => {
-  //表格数据
-  const [tableData, setTableData] = useState([]);
   //移动小节
   const moveSection = (index, childIndex, type) => {
-    let newTableData = JSON.parse(JSON.stringify(tableData));
+    let newTableData = JSON.parse(JSON.stringify(props.data));
     let currentSection = newTableData[index].children[childIndex];
     if (type === 'up' && childIndex === 0) {
       return;
@@ -23,56 +21,32 @@ const Robot = (props, ref) => {
     newTableData[index].children[childIndex] =
       newTableData[index].children[targetIndex];
     newTableData[index].children[targetIndex] = currentSection;
-    setTableData(newTableData);
+    props.setOutlineData(newTableData);
   };
   //删除小节
   const deleteSection = (index, childIndex) => {
-    let newTableData = JSON.parse(JSON.stringify(tableData));
+    let newTableData = JSON.parse(JSON.stringify(props.data));
     newTableData[index].children.splice(childIndex, 1);
-    setTableData(newTableData);
+    props.setOutlineData(newTableData);
   };
   //添加小节
   const addSection = (index) => {
-    let newTableData = JSON.parse(JSON.stringify(tableData));
+    let newTableData = JSON.parse(JSON.stringify(props.data));
     newTableData[index].children.push('');
-    setTableData(newTableData);
+    props.setOutlineData(newTableData);
   };
-  useEffect(() => {
-    let jsonStr = '';
-    //如果没有正则出json```则跳过后面方法
-    if (!props.data.match(/```json/)) {
-      jsonStr = props.data;
-    } else {
-      //正则出json```主题内容```格式的数据
-      let reg = /```([\s\S]*?)```/g;
-      let json = props.data.match(reg);
-      //删除'json```'和'```'字符
-      jsonStr = json[0].replace(/```json/g, '').replace(/```/g, '');
-      //删除开头的换行符
-      jsonStr = jsonStr.replace(/^\n/, '');
-      //将json字符串转换为json对象
-    }
-    let jsonObj = {};
-    try {
-      jsonObj = JSON.parse(jsonStr);
-    } catch (e) {
-      message.error('json格式错误');
-      //返回上一步
-      props.prevStep1(1);
-      return;
-    }
-    //title是大纲的标题,sub是大纲的小节,subTitle是小节的标题,jsonObj
-    let tableData = [];
-    jsonObj.sub.map((item) => {
-      let title = item.subTitle;
-      let children = [];
-      item.subSub.map((subItem) => {
-        children.push(subItem);
-      });
-      tableData.push({ title, children });
-    });
-    setTableData(tableData);
-  }, [props.data]);
+  //修改小节内容
+  const changeSection = (index, childIndex, value) => {
+    let newTableData = JSON.parse(JSON.stringify(props.data));
+    newTableData[index].children[childIndex] = value;
+    props.setOutlineData(newTableData);
+  };
+  //修改大纲标题
+  const changeTitle = (index, value) => {
+    let newTableData = JSON.parse(JSON.stringify(props.data));
+    newTableData[index].title = value;
+    props.setOutlineData(newTableData);
+  };
 
   return (
     <div className="overview-table">
@@ -84,10 +58,16 @@ const Robot = (props, ref) => {
       </div>
       <div className="content">
         <div className="content-scroll">
-          {tableData.map((item, index) => {
+          {props.data.map((item, index) => {
             return (
               <div key={index} className="content-section">
-                <div className="content-title">{item.title}</div>
+                <div className="content-title">
+                  <Input
+                    value={item.title}
+                    style={{ width: '60%' }}
+                    onChange={(e) => changeTitle(index, e.target.value)}
+                  />
+                </div>
                 <div className="content-list">
                   {item.children.map((child, childIndex) => {
                     return (
@@ -107,7 +87,12 @@ const Robot = (props, ref) => {
                           <div className="num">{childIndex + 1}</div>
                         </div>
                         <div style={{ flex: '1' }}>
-                          <Input value={child} />
+                          <Input
+                            value={child}
+                            onChange={(e) => {
+                              changeSection(index, childIndex, e.target.value);
+                            }}
+                          />
                         </div>
                         <div style={{ width: '50px', textAlign: 'center' }}>
                           <DeleteOutlined

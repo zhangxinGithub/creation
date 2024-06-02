@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-  Outlet,
-  Navigate,
-} from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Outlet } from 'react-router-dom';
 import router from '@/router/router';
 
 function App() {

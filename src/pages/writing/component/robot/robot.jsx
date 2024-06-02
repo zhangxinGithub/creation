@@ -21,7 +21,9 @@ const config = {
   maxCount: 5,
   showUploadList: false,
 };
-
+let timer = null;
+//流式定时器
+let streamTimer = null;
 let typeArr = ['汇报类', '调研类', '规划类', '方案类', '讲话类', '演讲类'];
 const Robot = (props, ref) => {
   const [open, setOpen] = useState(false);
@@ -63,12 +65,15 @@ const Robot = (props, ref) => {
       setWritingOptions(value);
     };
     if (chatList.length > 0) {
-      Modal.info({
+      Modal.confirm({
         title: '提示',
         content: '切换状态会清空聊天记录，是否继续？',
+        okText: '确认',
+        cancelText: '取消',
         onOk() {
           okCallback();
         },
+        onCancel() {},
       });
     } else {
       okCallback();
@@ -190,11 +195,14 @@ const Robot = (props, ref) => {
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
-    let resList = '';
+    let resList = [];
+    let globalRes = '';
+    let reference = '';
     let copyChatList = cloneDeep(chatList);
     copyChatList.push({
       type: 'ASSISTANT',
       value: '',
+      reference: '',
     });
     setChatList(copyChatList);
     const response = await fetch('http://ais.fxincen.top:8030/aikb/v1/search', {
@@ -204,38 +212,76 @@ const Robot = (props, ref) => {
     });
     //流式输出
     const reader = response.body.getReader();
+
     while (true) {
       const { done, value } = await reader.read();
-
       if (done) {
+        let obj = cloneDeep(copyChatList);
+        resList.map((item) => {
+          let resObj = JSON.parse(item);
+          globalRes += resObj.body;
+        });
+        obj[obj.length - 1] = {
+          type: 'ASSISTANT',
+          value: globalRes,
+          reference: cloneDeep(reference),
+        };
+        setChatList(obj);
+        el.scrollTop = el.scrollHeight;
         break;
       }
 
       //解析对象
       let res = new TextDecoder().decode(value);
       if (res && res !== ' ') {
-        //删除res中'data:'
         res = res.replace(/data:/g, '');
-        console.log('res', res);
-        let resObj = JSON.parse(res);
-        console.log('resObj', resObj);
-        let obj = cloneDeep(copyChatList);
-        if (resObj.type === 'MESSAGE') {
-          resList += resObj.body;
-          obj = cloneDeep(copyChatList);
-          obj[obj.length - 1].value = resList;
-          setChatList(obj);
-          el.scrollTop = el.scrollHeight;
+        // res = res.replace(/\n\n$/, '!@&');
+        // globalRes += res;
+        // //将尾部双换行符改成\n\n
+        // console.log('globalRes', globalRes);
+        // //切分globalRes成数组
+        // let arr = globalRes.split('');
+        // resList.concat(arr);
+        // console.log('resList', resList);
+        // console.log('resList', resList);
+        //只去掉尾部双换行符
+        res = res.replace(/\n\n$/, '');
+        if (res) {
+          resList.push(res);
+          console.log('resList', resList);
+
+          //消费resList中的第一条数据
+          if (resList.length > 0) {
+            let last = resList[0];
+            //如果last是字符串中有双换行符则拆分成数组
+            if (last.indexOf('\n\n') > -1) {
+              console.log('????????????');
+              let arr = last.split('\n\n');
+              console.log('arr11111111', arr);
+              //删除resList中的第一条数据
+              resList.shift();
+              //将arr中的数据插入到resList最前面
+              resList = arr.concat(resList);
+              console.log('resList2222222', resList);
+            }
+            let resObj = JSON.parse(resList[0]);
+            let obj = cloneDeep(copyChatList);
+            if (resObj.type === 'MESSAGE') {
+              globalRes += resObj.body;
+              obj[obj.length - 1].value = globalRes;
+              el.scrollTop = el.scrollHeight;
+              setChatList(obj);
+            }
+            if (resObj.type === 'REFERENCE') {
+              if (resObj.body !== '[]') {
+                reference = resObj.body;
+              }
+            }
+            //删除resList中的第一条数据
+            await resList.shift();
+          }
         }
       }
-
-      // let obj = cloneDeep(copyChatList);
-      // if (resObj.type === 'MESSAGE') {
-      //   obj = cloneDeep(copyChatList);
-      //   obj[obj.length - 1].value = resObj.body;
-      //   setChatList(obj);
-      //   el.scrollTop = el.scrollHeight;
-      // }
     }
   };
   //文档上传
@@ -249,8 +295,32 @@ const Robot = (props, ref) => {
       if (list.length > 5) {
         list = list.slice(-5);
       }
+      list.map((item) => {
+        item.sectionType = '切片中';
+        return item;
+      });
       setFileList(list);
     }
+  };
+  //删除已经上传的文件
+  const deleteFile = async (id, index) => {
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    const response = await fetch(
+      `http://ais.fxincen.top:8030/aikb/v1/doc?id=${id}`,
+      {
+        method: 'delete',
+        headers: headers,
+      }
+    );
+    let res = await response.json();
+    console.log('res', res);
+
+    let list = fileList.concat();
+    list.splice(index, 1);
+    setFileList(list);
+    return res;
   };
   const content = (
     <div className="page-list">
@@ -263,14 +333,14 @@ const Robot = (props, ref) => {
         return (
           <div key={index} className="table-th">
             <div style={{ width: '80px' }}>{item.name}</div>
-            <div style={{ width: '40px', paddingLeft: '4px' }}>切片中</div>
+            <div style={{ width: '40px', paddingLeft: '4px' }}>
+              {item.sectionType}
+            </div>
             <div>
               <CloseOutlined
                 style={{ color: 'red', cursor: 'pointer' }}
                 onClick={() => {
-                  let list = fileList.concat();
-                  list.splice(index, 1);
-                  setFileList(list);
+                  deleteFile(item.response.payload[0].id, index);
                 }}
               />
             </div>
@@ -279,6 +349,74 @@ const Robot = (props, ref) => {
       })}
     </div>
   );
+  //传入文本id数组检测文章是否切片完成
+  const checkFileStatus = async (idList) => {
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+    });
+    const response = await fetch(
+      `http://ais.fxincen.top:8030/aikb/v1/doc?id=${idList.join('&')}`,
+      {
+        method: 'get',
+        headers: headers,
+      }
+    );
+    let res = await response.json();
+    console.log('res', res);
+    return res;
+  };
+  //调用检测文章是否切片完成
+  const checkFile = () => {
+    checkFileStatus(
+      fileList
+        .filter((item) => item.sectionType === '切片中')
+        .map((item) => item.response.payload[0].id)
+    ).then((res) => {
+      console.log('res111111', res);
+    });
+  };
+  //使用modal展示命中片段
+  const showReference = (reference) => {
+    let arr = [];
+    console.log('reference', reference);
+    if (reference) {
+      arr = JSON.parse(reference);
+    } else {
+      message.error('未命中片段');
+      return;
+    }
+
+    Modal.info({
+      title: '命中片段',
+      width: '800px',
+      content: (
+        <div>
+          {arr.map((item, index) => {
+            return (
+              <div key={index} style={{ marginBottom: '10px' }}>
+                <div style={{ color: '#5c8bf7' }}>{item.title}</div>
+                <div>{item.content}</div>
+              </div>
+            );
+          })}
+        </div>
+      ),
+    });
+  };
+  //重新生成
+  const reGenerate = () => {
+    let list = chatList.concat();
+    //将最后一个user对话记录下来
+    // let lastValue = list.filter((item) => item.type === 'USER')[list.length - 1]
+    //   .value;
+    let lastItem = list.filter((item) => item.type === 'USER');
+    let lastValue = lastItem[lastItem.length - 1].value;
+
+    setInputValue(lastValue);
+    list.pop();
+    setChatList(list);
+  };
+
   //监听chatList
   useEffect(() => {
     console.log('inputValue', inputValue);
@@ -303,6 +441,20 @@ const Robot = (props, ref) => {
       setFileStatus(false);
     }
   }, [writingOptions]);
+  useEffect(() => {
+    if (open) {
+      checkFile();
+      //创建定时器
+      timer = setInterval(() => {
+        checkFile();
+      }, 3000);
+    }
+    if (!open) {
+      console.log('clear');
+      //清除定时器
+      clearInterval(timer);
+    }
+  }, [open]);
 
   return (
     <div className="robot">
@@ -327,8 +479,7 @@ const Robot = (props, ref) => {
           <div className="info-body">
             嗨，很高兴为您服务！
             <br /> 如果创作需要AI助手引导，请点击“AI创作助手”
-            如果基于本地知识库检索问题和答案，请点击“AI知识检索”
-            如果创作只需AI大模型能力支持，请点击“AI对话”。
+            如果基于本地知识库检索问题和答案，请点击“AI知识检索”。
           </div>
         </div>
         {chatList.map((item, index) => {
@@ -368,7 +519,24 @@ const Robot = (props, ref) => {
                     复制
                   </div>
                   {chatList.length === index + 1 && (
-                    <div className="robot-btn">重新生成</div>
+                    <div
+                      className="robot-btn"
+                      onClick={() => {
+                        reGenerate();
+                      }}
+                    >
+                      重新生成
+                    </div>
+                  )}
+                  {writingOptions === 2 && (
+                    <div
+                      className="robot-btn"
+                      onClick={() => {
+                        showReference(item.reference);
+                      }}
+                    >
+                      查看命中片段
+                    </div>
                   )}
                 </div>
               </div>
@@ -449,7 +617,8 @@ const Robot = (props, ref) => {
             }}
             className="textArea"
             style={{ fontSize: '12px', resize: 'none', border: 'none' }}
-            placeholder="请输入你的问题,例如:写一篇乡镇基层工作周报(shift+enter)"
+            placeholder="帮我把以下文字内容进行丰富，写到200字，内容如下：
+[尽管 AI 技术在理论和实验室环境中取得了显著进展，但在实际产业应用中，仍然缺乏成熟的解决方案。](shift+enter)"
             rows={5}
           />
           <div className="textArea-footer">

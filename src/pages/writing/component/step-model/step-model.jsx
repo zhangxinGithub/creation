@@ -71,10 +71,6 @@ const App = (props, ref) => {
     form.resetFields();
   };
 
-  const onFinish = (values) => {
-    console.log('Received values of form: ', values);
-    //bindArea();
-  };
   //稿件分类变化
   const typeChange = (e) => {
     console.log('typeChange:', e.target.value);
@@ -149,7 +145,7 @@ const App = (props, ref) => {
         setSummaryStr(str);
         generateSummary(prompt1, str, (result) => {
           console.log('result:', result);
-          setOutlineData(result[0].content.text);
+          formatOutlineData(result[0].content.text);
           setCurrent(2);
         });
       });
@@ -169,11 +165,47 @@ const App = (props, ref) => {
       startWriting();
     }
   }, [props.globalLoading]);
+  //格式化大纲信息
+  const formatOutlineData = (data) => {
+    let jsonStr = '';
+    //如果没有正则出json```则跳过后面方法
+    if (!data.match(/```json/)) {
+      jsonStr = data;
+    } else {
+      //正则出json```主题内容```格式的数据
+      let reg = /```([\s\S]*?)```/g;
+      let json = data.match(reg);
+      //删除'json```'和'```'字符
+      jsonStr = json[0].replace(/```json/g, '').replace(/```/g, '');
+      //删除开头的换行符
+      jsonStr = jsonStr.replace(/^\n/, '');
+      //将json字符串转换为json对象
+    }
+    let jsonObj = {};
+    try {
+      jsonObj = JSON.parse(jsonStr);
+    } catch (e) {
+      // message.error('json格式错误');
+      redoOutline();
+      return;
+    }
+    //title是大纲的标题,sub是大纲的小节,subTitle是小节的标题,jsonObj
+    let tableData = [];
+    jsonObj.sub.map((item) => {
+      let title = item.subTitle;
+      let children = [];
+      item.subSub.map((subItem) => {
+        children.push(subItem);
+      });
+      tableData.push({ title, children });
+    });
+    setOutlineData(tableData);
+  };
   //换一批
   const redoOutline = () => {
     generateSummary(prompt1, summaryStr, (result) => {
       console.log('result:', result);
-      setOutlineData(result[0].content.text);
+      formatOutlineData(result[0].content.text);
     });
   };
   //模型生成摘要信息&&大纲
@@ -225,6 +257,17 @@ const App = (props, ref) => {
       setLoading(false);
     }
   };
+  //解析大纲信息json章节改成**章节**格式,小节改成 - 小节 格式
+  const outlineDataToStr = (data) => {
+    let str = '';
+    data.map((item) => {
+      str += `**${item.title}**\n`;
+      item.children.map((child) => {
+        str += ` - ${child}\n`;
+      });
+    });
+    return str;
+  };
   //开始写作接口
   const startWriting = async () => {
     let pageType = baseForm.getFieldValue('pageType');
@@ -243,7 +286,7 @@ const App = (props, ref) => {
               prompt2.user[pageType] +
               summaryStr +
               '【大纲信息】=' +
-              outlineData,
+              outlineDataToStr(outlineData),
           },
         },
       ],
@@ -555,7 +598,11 @@ const App = (props, ref) => {
             ]}
           >
             <div>
-              <OverviewTable data={outlineData} prevStep1={prevStep1} />
+              <OverviewTable
+                data={outlineData}
+                setOutlineData={setOutlineData}
+                prevStep1={prevStep1}
+              />
               <div className="redoOut" onClick={redoOutline}>
                 <RedoOutlined style={{ marginRight: '4px' }} />
                 换一批

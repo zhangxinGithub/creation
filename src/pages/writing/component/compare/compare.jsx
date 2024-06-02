@@ -35,7 +35,7 @@ const Robot = (props, ref) => {
             resolve(resultObject.value); //将处理好的html数据返回
           });
       };
-      reader.readAsArrayBuffer(file); // 启动读取指定的 Blob 或 File 内容 ：https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsArrayBuffer
+      reader.readAsArrayBuffer(file);
     });
   };
 

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Radio, Button, Space, message } from 'antd';
 import Editor from './component/editor/editor';
 import stepIcon from '@/assets/img/step.png';
@@ -8,23 +8,26 @@ import StepModel from './component/step-model/step-model';
 import Robot from './component/robot/robot';
 import Compare from './component/compare/compare';
 import essayIcon from '@/assets/img/essay.png';
+import groupIcon from '@/assets/img/group.png';
 import homeIcon from '@/assets/img/home.png';
 import checkIcon from '@/assets/img/check.png';
 import '@/common/html-docx';
 import FileSaver from 'file-saver';
 import Upload from './component/upload/upload';
 import { docList } from '@/doc/docx';
+import GroupDrawer from './component/group-drawer/group-drawer';
 
 let compareWidth = 450;
 //保存高亮前的html
 let htmlCopy = '';
 const Main = () => {
+  const drawerRef = useRef({});
   // editor 实例
   const [editor, setEditor] = useState(null); // JS 语法
   //左侧菜单展示状态
   const [leftMenuState, setLeftMenuState] = useState(false);
   //右侧菜单展示状态
-  const [rightMenuWidth, setRightMenuState] = useState(300);
+  const [rightMenuWidth, setRightMenuState] = useState(0);
   // 编辑器内容
   const [html, setHtml] = useState();
   //左侧菜单radio选中值
@@ -153,6 +156,15 @@ const Main = () => {
           <img src={essayIcon} onClick={toggleLeftMenu} />
           <div>范文</div>
         </div>
+        <div>
+          <img
+            src={groupIcon}
+            onClick={() => {
+              drawerRef.current.showDrawer();
+            }}
+          />
+          <div>组装</div>
+        </div>
       </div>
       <div className="container">
         <div className="top-bar">
@@ -264,6 +276,7 @@ const Main = () => {
         setGlobalLoading={setGlobalLoading}
         globalLoading={globalLoading}
       />
+      <GroupDrawer ref={drawerRef} setHtml={setHtml} />
     </div>
   );
 };

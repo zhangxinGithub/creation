@@ -2,7 +2,7 @@ import '@wangeditor/editor/dist/css/style.css'; // 引入 css
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor, Toolbar } from '@wangeditor/editor-for-react';
-import { DomEditor, Boot } from '@wangeditor/editor';
+import { DomEditor } from '@wangeditor/editor';
 import WrapperComponent from '@/common/wrapperComponent';
 
 function MyEditor(props) {
@@ -10,7 +10,13 @@ function MyEditor(props) {
   // 工具栏高度
   const [toolbarHeight, setToolbarHeight] = useState(80);
   const toolbarConfig = {
-    excludeKeys: ['headerSelect', '|', 'group-video'],
+    excludeKeys: [
+      'headerSelect',
+      '|',
+      'group-video',
+      'fullScreen',
+      'codeBlock',
+    ],
   }; // JS 语法
   // 编辑器配置
   const editorConfig = {

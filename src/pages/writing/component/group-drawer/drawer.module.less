@@ -1,0 +1,83 @@
+.group-drawer {
+  height: 100%;
+  .pre-view {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px #8c8c8c dotted;
+    .upload {
+      flex: 1;
+    }
+    .pre-view-scroll {
+      height: calc(100vh - 100px);
+
+      display: flex;
+      .file-body {
+        width: 38%;
+        overflow-y: auto;
+        height: 100%;
+        border-right: 1px #d9d9d9 solid;
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+          //超出部分省略号
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          cursor: pointer;
+          width: 22vw;
+        }
+        h2 {
+          //缩进
+          text-indent: 10px;
+        }
+        h3 {
+          //缩进
+          text-indent: 20px;
+        }
+        h4 {
+          //缩进
+          text-indent: 30px;
+        }
+        h5 {
+          //缩进
+          text-indent: 40px;
+        }
+        h6 {
+          //缩进
+          text-indent: 50px;
+        }
+        .file-item {
+          margin-left: 10px;
+          .file-body-scroll {
+          }
+        }
+      }
+    }
+  }
+  .result {
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    //禁止所有h1~h6的默认样式
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      //超出部分省略号
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
