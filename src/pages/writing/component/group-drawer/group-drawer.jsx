@@ -1,11 +1,26 @@
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
-import { Drawer, List, Row, Col, Upload, Checkbox, Space, Button } from 'antd';
+import {
+  Drawer,
+  List,
+  Row,
+  Col,
+  Upload,
+  Checkbox,
+  Space,
+  Spin,
+  Button,
+  message,
+  Modal,
+} from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import mammoth from 'mammoth';
 import styles from './drawer.module.less';
 import { cloneDeep, findIndex } from 'lodash';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { message } from 'antd';
+import {
+  DownOutlined,
+  UpOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 
 const { Dragger } = Upload;
 const config = {
@@ -16,6 +31,7 @@ const config = {
 };
 
 const GroupDrawer = forwardRef((props, ref) => {
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   //上传文件list
   const [uploadList, setUploadList] = useState([]);
@@ -26,13 +42,16 @@ const GroupDrawer = forwardRef((props, ref) => {
     setOpen(true);
   };
   const onClose = () => {
-    clearAll();
+    // clearAll();
     setOpen(false);
   };
   //清空所有数据
-  const clearAll = () => {
-    setUploadList([]);
-    setNewArticle([]);
+  // const clearAll = () => {
+  //   setUploadList([]);
+  //   setNewArticle([]);
+  // };
+  const confirm = () => {
+    //如果props中有数据则提示是否清空
   };
 
   //传入文件解析后的html数据
@@ -41,8 +60,20 @@ const GroupDrawer = forwardRef((props, ref) => {
     newArticle.forEach((item) => {
       newHtml += item.content;
     });
-    props.setHtml(newHtml);
-    onClose();
+    console.log('props.html', props.html);
+    Modal.confirm({
+      title: '此操作会刷新编辑器内容，是否继续？',
+      icon: <ExclamationCircleOutlined />,
+      okText: '确认',
+      cancelText: '取消',
+      onOk() {
+        props.setHtml(newHtml);
+        onClose();
+      },
+      onCancel() {
+        console.log('Cancel');
+      },
+    });
   };
   //文件选择事件
   const fileChange = async (info) => {
@@ -52,6 +83,16 @@ const GroupDrawer = forwardRef((props, ref) => {
         message.error('最多上传5个文件');
         return;
       }
+      //只能上传doc与docx文件
+      if (
+        info.file.type !==
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
+        info.file.type !== 'application/msword'
+      ) {
+        message.error('只能上传doc与docx文件');
+        return;
+      }
+      setLoading(true);
       const value = await analysisWord(info.file.originFileObj); //解析word
       getHtmlTree(value);
     }
@@ -140,6 +181,7 @@ const GroupDrawer = forwardRef((props, ref) => {
     let arr = [...uploadList];
     arr.push(result);
     setUploadList(arr);
+    setLoading(false);
     //console.log(result);
   };
   //选中文章块标记状态复制到新文章目录
@@ -220,6 +262,20 @@ const GroupDrawer = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     showDrawer: showDrawer,
   }));
+  //删除文件
+  const deleteFile = (page, index) => {
+    //如果page没有被选中则直接删除
+    let delState = page.every((item) => {
+      return !item.checked;
+    });
+    if (delState) {
+      let arr = [...uploadList];
+      arr.splice(index, 1);
+      setUploadList(arr);
+      return;
+    }
+    message.error('请先取消选中');
+  };
   return (
     <>
       <Drawer
@@ -232,51 +288,72 @@ const GroupDrawer = forwardRef((props, ref) => {
         <div className={styles['group-drawer']}>
           <Row style={{ width: '100%' }} gutter={24} justify="space-between">
             <Col span={18}>
-              <div className={styles['pre-view']}>
-                <div
-                  style={{ minWidth: `${(uploadList.length + 1) * 40}%` }}
-                  className={styles['pre-view-scroll']}
-                >
-                  {uploadList.map((page, pageIndex) => {
-                    return (
-                      <div key={pageIndex} className={styles['file-body']}>
-                        <div className={styles['file-body-scroll']}>
-                          {page.map((item, index) => {
-                            return (
-                              <div key={index} className={styles['file-item']}>
-                                <Checkbox
-                                  onClick={() =>
-                                    selectArticle(page, pageIndex, item, index)
-                                  }
+              <Spin tip="文章解析中..." spinning={loading} size="large">
+                <div className={styles['pre-view']}>
+                  <div
+                    style={{ minWidth: `${(uploadList.length + 1) * 40}%` }}
+                    className={styles['pre-view-scroll']}
+                  >
+                    {uploadList.map((page, pageIndex) => {
+                      return (
+                        <div key={pageIndex} className={styles['file-body']}>
+                          <div className={styles['delete-file']}>
+                            <Button
+                              danger
+                              size="small"
+                              onClick={() => {
+                                deleteFile(page, pageIndex);
+                              }}
+                            >
+                              删除
+                            </Button>
+                          </div>
+                          <div className={styles['file-body-scroll']}>
+                            {page.map((item, index) => {
+                              return (
+                                <div
+                                  key={index}
+                                  className={styles['file-item']}
                                 >
-                                  <div
-                                    dangerouslySetInnerHTML={{
-                                      __html: item.title,
-                                    }}
-                                  ></div>
-                                </Checkbox>
-                              </div>
-                            );
-                          })}
+                                  <Checkbox
+                                    onClick={() =>
+                                      selectArticle(
+                                        page,
+                                        pageIndex,
+                                        item,
+                                        index
+                                      )
+                                    }
+                                  >
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: item.title,
+                                      }}
+                                    ></div>
+                                  </Checkbox>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  <div className={styles['upload']}>
-                    <Dragger {...config} onChange={fileChange}>
-                      <p style={{ flex: 1 }} className="ant-upload-drag-icon">
-                        <InboxOutlined />
-                      </p>
-                      <p className="ant-upload-text">
-                        单击或拖动文件到此区域进行上传
-                      </p>
-                      <p className="ant-upload-hint">
-                        支持上传doc,docx等文件格式。
-                      </p>
-                    </Dragger>
+                      );
+                    })}
+                    <div className={styles['upload']}>
+                      <Dragger {...config} onChange={fileChange}>
+                        <p style={{ flex: 1 }} className="ant-upload-drag-icon">
+                          <InboxOutlined />
+                        </p>
+                        <p className="ant-upload-text">
+                          单击或拖动文件到此区域进行上传
+                        </p>
+                        <p className="ant-upload-hint">
+                          支持上传doc,docx等文件格式。
+                        </p>
+                      </Dragger>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Spin>
             </Col>
             <Col span={6}>
               <div className={styles['result']}>
@@ -307,7 +384,7 @@ const GroupDrawer = forwardRef((props, ref) => {
                         <Col span={2}>
                           <Checkbox
                             defaultChecked={item.checked}
-                            onChange={(item, index) => {
+                            onChange={() => {
                               newListCheck(item, index);
                             }}
                           ></Checkbox>

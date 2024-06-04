@@ -272,6 +272,7 @@ const Main = () => {
       {/* <RightBlock /> */}
       <StepModel
         ref={stepModelRef}
+        html={html}
         setHtml={setHtml}
         setGlobalLoading={setGlobalLoading}
         globalLoading={globalLoading}
