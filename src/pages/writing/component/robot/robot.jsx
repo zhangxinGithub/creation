@@ -10,7 +10,7 @@ import {
   FileTextOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, find } from 'lodash';
 import { writingAssistant } from '../step-model/data';
 
 const { TextArea } = Input;
@@ -286,9 +286,9 @@ const Robot = (props, ref) => {
   };
   //文档上传
   const upLoadChange = (info) => {
-    console.log('info', info);
     //如果上传成功,则保存到fileList中
     if (info.file.status === 'done') {
+      console.log('info', info);
       let list = fileList.concat();
       list.push(info.file);
       //只保留最后5个文件
@@ -354,15 +354,27 @@ const Robot = (props, ref) => {
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
+    let str = idList.map((item) => `id=${item}`).join('&');
     const response = await fetch(
-      `http://ais.fxincen.top:8030/aikb/v1/doc?id=${idList.join('&')}`,
+      `http://ais.fxincen.top:8030/aikb/v1/doc?${str}`,
       {
         method: 'get',
         headers: headers,
       }
     );
     let res = await response.json();
-    console.log('res', res);
+    //更新fileList中的sectionType
+    let cloneList = cloneDeep(fileList);
+    cloneList.map((item) => {
+      if (item.sectionType === '切片中') {
+        let doc = find(res.payload, { id: item.response.payload[0].id });
+        if (doc && doc.splitStatus === 'SPLIT_COMPLETED') {
+          item.sectionType = '已完成';
+        }
+      }
+      return item;
+    });
+    setFileList(cloneList);
     return res;
   };
   //调用检测文章是否切片完成
@@ -447,12 +459,13 @@ const Robot = (props, ref) => {
       //创建定时器
       timer = setInterval(() => {
         checkFile();
-      }, 3000);
+      }, 5000);
     }
     if (!open) {
       console.log('clear');
       //清除定时器
       clearInterval(timer);
+      timer = null;
     }
   }, [open]);
 

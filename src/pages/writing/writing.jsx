@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Radio, Button, Space, message } from 'antd';
 import Editor from './component/editor/editor';
 import stepIcon from '@/assets/img/step.png';

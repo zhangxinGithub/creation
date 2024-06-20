@@ -12,7 +12,13 @@ export default defineConfig({
   },
   plugins: [react()],
   build: {
-    minify: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
   },
   //设置代理
   server: {
@@ -22,6 +28,10 @@ export default defineConfig({
         target: 'http://10.168.81.203:8000',
         changeOrigin: true,
       },
+      // '/assistant': {
+      //   target: 'http://192.168.87.161:18086',
+      //   changeOrigin: true,
+      // },
     },
   },
   //配置less-loader
