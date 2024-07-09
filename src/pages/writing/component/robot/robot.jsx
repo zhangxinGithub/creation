@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import logo from '@/assets/img/xiaozhilogo.png';
-import { Input, message, Upload, Button, Popover, Dropdown, Modal } from 'antd';
+import {
+  Input,
+  message,
+  Upload,
+  Button,
+  Popover,
+  Dropdown,
+  Modal,
+  Tag,
+} from 'antd';
 import './robot.less';
 import palm from '@/assets/img/palm.png';
 import send from '@/assets/img/send.png';
@@ -12,18 +21,22 @@ import {
 } from '@ant-design/icons';
 import { cloneDeep, find } from 'lodash';
 import { writingAssistant } from '../step-model/data';
+import ReactMarkdown from 'react-markdown';
+import gfm from 'remark-gfm';
 
 const { TextArea } = Input;
 const config = {
   name: 'documentList',
   action: 'http://ais.fxincen.top:8030/aikb/v1/doc/upload',
   multiple: true,
-  maxCount: 5,
+  maxCount: 30,
   showUploadList: false,
 };
 let timer = null;
 //流式定时器
 let streamTimer = null;
+//loading状态
+let loading = false;
 let typeArr = ['汇报类', '调研类', '规划类', '方案类', '讲话类', '演讲类'];
 const Robot = (props, ref) => {
   const [open, setOpen] = useState(false);
@@ -178,6 +191,14 @@ const Robot = (props, ref) => {
       el.scrollTop = el.scrollHeight;
     }
   };
+  function canParseJSON(str) {
+    try {
+      JSON.parse(str);
+      return true; // 字符串可以解析成JSON
+    } catch (e) {
+      return false; // 字符串不能解析成JSON
+    }
+  }
   //RAG检索
   const getRagData = async (text) => {
     console.log('text', text);
@@ -195,7 +216,6 @@ const Robot = (props, ref) => {
     const headers = new Headers({
       'Content-Type': 'application/json',
     });
-    let resList = [];
     let globalRes = '';
     let reference = '';
     let copyChatList = cloneDeep(chatList);
@@ -212,73 +232,69 @@ const Robot = (props, ref) => {
     });
     //流式输出
     const reader = response.body.getReader();
-
+    loading = true;
+    //开启定时器
+    streamTimer = setInterval(() => {
+      console.log('streamBody', globalRes);
+      let obj = cloneDeep(copyChatList);
+      obj[obj.length - 1] = {
+        type: 'ASSISTANT',
+        value: globalRes,
+        reference: cloneDeep(reference),
+      };
+      setChatList(obj);
+      el.scrollTop = el.scrollHeight;
+      //查看globalRes最后一个字符是不是特殊字符
+      if (globalRes.indexOf('⁠⁣ ') > -1) {
+        //console.log('停止');
+        clearInterval(streamTimer);
+        streamTimer = null;
+        loading = false;
+        //funcAction();
+        //结束
+      }
+    }, 500);
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        let obj = cloneDeep(copyChatList);
-        resList.map((item) => {
-          let resObj = JSON.parse(item);
-          globalRes += resObj.body;
-        });
-        obj[obj.length - 1] = {
-          type: 'ASSISTANT',
-          value: globalRes,
-          reference: cloneDeep(reference),
-        };
-        setChatList(obj);
-        el.scrollTop = el.scrollHeight;
+        globalRes += '⁠⁣ ';
         break;
       }
 
       //解析对象
-      let res = new TextDecoder().decode(value);
+      let res = await new TextDecoder().decode(value);
       if (res && res !== ' ') {
         res = res.replace(/data:/g, '');
-        // res = res.replace(/\n\n$/, '!@&');
-        // globalRes += res;
-        // //将尾部双换行符改成\n\n
-        // console.log('globalRes', globalRes);
-        // //切分globalRes成数组
-        // let arr = globalRes.split('');
-        // resList.concat(arr);
-        // console.log('resList', resList);
-        // console.log('resList', resList);
         //只去掉尾部双换行符
         res = res.replace(/\n\n$/, '');
+        //如果res中有双换行符则拆分成数组
+        if (res.indexOf('\n\n') > -1) {
+          let arr = res.split('\n\n');
+          console.log('多段一起返回了', arr);
+          res = {
+            type: 'MESSAGE',
+            body: arr
+              .filter((item) => item !== '')
+              .map((item) => {
+                item = JSON.parse(item);
+                return item.body;
+              })
+              .join(''),
+          };
+          res = JSON.stringify(res);
+        }
         if (res) {
-          resList.push(res);
-          console.log('resList', resList);
-
-          //消费resList中的第一条数据
-          if (resList.length > 0) {
-            let last = resList[0];
-            //如果last是字符串中有双换行符则拆分成数组
-            if (last.indexOf('\n\n') > -1) {
-              console.log('????????????');
-              let arr = last.split('\n\n');
-              console.log('arr11111111', arr);
-              //删除resList中的第一条数据
-              resList.shift();
-              //将arr中的数据插入到resList最前面
-              resList = arr.concat(resList);
-              console.log('resList2222222', resList);
-            }
-            let resObj = JSON.parse(resList[0]);
-            let obj = cloneDeep(copyChatList);
-            if (resObj.type === 'MESSAGE') {
-              globalRes += resObj.body;
-              obj[obj.length - 1].value = globalRes;
-              el.scrollTop = el.scrollHeight;
-              setChatList(obj);
-            }
+          console.log('res', res);
+          if (canParseJSON(res)) {
+            let resObj = JSON.parse(res);
             if (resObj.type === 'REFERENCE') {
               if (resObj.body !== '[]') {
                 reference = resObj.body;
               }
             }
-            //删除resList中的第一条数据
-            await resList.shift();
+            if (resObj.type === 'MESSAGE') {
+              globalRes += resObj.body;
+            }
           }
         }
       }
@@ -292,8 +308,8 @@ const Robot = (props, ref) => {
       let list = fileList.concat();
       list.push(info.file);
       //只保留最后5个文件
-      if (list.length > 5) {
-        list = list.slice(-5);
+      if (list.length > config.maxCount) {
+        list = list.slice(-config.maxCount);
       }
       list.map((item) => {
         item.sectionType = '切片中';
@@ -403,14 +419,35 @@ const Robot = (props, ref) => {
       width: '800px',
       content: (
         <div>
-          {arr.map((item, index) => {
-            return (
-              <div key={index} style={{ marginBottom: '10px' }}>
-                <div style={{ color: '#5c8bf7' }}>{item.title}</div>
-                <div>{item.content}</div>
-              </div>
-            );
-          })}
+          {arr
+            .filter((item, index) => {
+              //score相同的只展示一个
+              return (
+                arr.findIndex((item2) => item2.score === item.score) === index
+              );
+            })
+            .map((item, index) => {
+              return (
+                <div key={index} style={{ marginBottom: '10px' }}>
+                  <div style={{ color: '#5c8bf7' }}>
+                    {item.title}
+                    <Tag style={{ marginLeft: '10px' }} color="processing">
+                      相似度:{item.score}
+                    </Tag>
+                  </div>
+                  <pre
+                    style={{
+                      marginBottom: '10px',
+                      width: '100%',
+                      wordWrap: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {item.content}
+                  </pre>
+                </div>
+              );
+            })}
         </div>
       ),
     });
@@ -431,7 +468,6 @@ const Robot = (props, ref) => {
 
   //监听chatList
   useEffect(() => {
-    console.log('inputValue', inputValue);
     if (chatList.length > 0) {
       let last = chatList[chatList.length - 1];
       if (last.type === 'USER') {
@@ -513,7 +549,11 @@ const Robot = (props, ref) => {
           if (item.type === 'ASSISTANT' && item.value !== '') {
             return (
               <div className="robot" key={index}>
-                <div className="robot-text">{item.value}</div>
+                <div className="robot-text">
+                  <ReactMarkdown remarkPlugins={[gfm]}>
+                    {item.value}
+                  </ReactMarkdown>
+                </div>
                 <div className="robot-btns">
                   <div
                     className="robot-btn"
@@ -612,6 +652,7 @@ const Robot = (props, ref) => {
         </div>
         <div className="textArea-body">
           <TextArea
+            maxLength={400}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onPressEnter={(e) => {

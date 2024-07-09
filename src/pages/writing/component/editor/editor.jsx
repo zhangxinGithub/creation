@@ -25,13 +25,15 @@ function MyEditor(props) {
     MENU_CONF: {},
   };
   editorConfig.MENU_CONF['uploadImage'] = {
-    async customUpload(file, insertFn) {
-      //获取本地图片地址
-      const url = URL.createObjectURL(file);
-      console.log('url', url); // JS 语法
+    base64LimitSize: 9999999 * 1024, // 5kb
+    // async customUpload(file, insertFn) {
+    //   console.log('file', file); // 上传图片文件
+    //   //获取本地图片地址
+    //   const url = URL.createObjectURL(file);
+    //   console.log('url', url); // JS 语法
 
-      insertFn(url, '图片', url);
-    },
+    //   insertFn(url, '图片', url);
+    // },
   };
   // 及时销毁 editor ，重要！
   useEffect(() => {

@@ -104,7 +104,7 @@ const Main = () => {
       </body>
     </html>
   `;
-
+    console.log('fullHtmlContent', fullHtmlContent);
     // 使用 html-docx-js 将 HTML 转换为 Word 文档的 Blob 对象
     const converted = window.htmlDocx.asBlob(fullHtmlContent);
 
