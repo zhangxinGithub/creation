@@ -17,9 +17,8 @@ import {
 } from 'antd';
 
 import './xlsxfile.less';
-import { UploadOutlined, SyncOutlined, InboxOutlined } from '@ant-design/icons';
+import { SyncOutlined, InboxOutlined } from '@ant-design/icons';
 import EditTable from './component/table/table';
-import { set } from 'lodash';
 
 const { Dragger } = Upload;
 
@@ -172,7 +171,7 @@ const App = (props, ref) => {
   };
   useEffect(() => {
     if (isModalOpen) {
-      setCurrent(2);
+      setCurrent(0);
     }
   }, [isModalOpen]);
 

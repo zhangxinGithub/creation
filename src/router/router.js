@@ -11,6 +11,11 @@ const router = [
     path: '/check',
     component: lazy(() => import('@/pages/check/check')),
   },
+  {
+    name: 'demo',
+    path: '/demo',
+    component: lazy(() => import('@/pages/demo/demo')),
+  },
 ];
 
 export default router;

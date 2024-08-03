@@ -24,6 +24,8 @@
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.15.0",
     "remark-gfm": "^4.0.0",
+    "pixi.js": "6.5.2",
+    "pixi-live2d-display": "^0.4.0",
     "terser": "^5.31.0"
   },
   "devDependencies": {
