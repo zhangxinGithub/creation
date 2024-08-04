@@ -17,41 +17,23 @@ import {
 } from 'antd';
 
 import './xlsxfile.less';
-import { UploadOutlined, SyncOutlined, InboxOutlined } from '@ant-design/icons';
+import { SyncOutlined, InboxOutlined } from '@ant-design/icons';
 import EditTable from './component/table/table';
-import { set } from 'lodash';
 
 const { Dragger } = Upload;
 
-const uploadProps = {
-  name: 'documentList',
-  multiple: true,
-  action: 'http://ais.fxincen.top:8030/aikb/v1/biz/doc/upload',
-  onChange(info) {
-    const { status } = info.file;
-    if (status !== 'uploading') {
-      console.log(info.file, info.fileList);
-    }
-    if (status === 'done') {
-      message.success(`${info.file.name} 上传成功.`);
-    } else if (status === 'error') {
-      message.error(`${info.file.name} 上传失败.`);
-    }
-  },
-  onDrop(e) {
-    console.log('Dropped files', e.dataTransfer.files);
-  },
-};
-
 const App = (props, ref) => {
   //loading状态
+  const [firstLoading, setFirstLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tableForm] = Form.useForm();
   const [configForm] = Form.useForm();
-  const [current, setCurrent] = useState(2);
+  const [current, setCurrent] = useState(0);
   const [editForm] = Form.useForm();
   const [preHtml, setPreHtml] = useState('');
+  const [dataSource, setDataSource] = useState([]);
+  const [fileList, setFileList] = useState([]);
 
   const onChange = (value) => {
     console.log('onChange:', value);
@@ -63,6 +45,28 @@ const App = (props, ref) => {
   };
   const hideModal = () => {
     setIsModalOpen(false);
+  };
+
+  const uploadProps = {
+    name: 'documentList',
+    multiple: true,
+    fileList: fileList,
+    action: 'http://ais.fxincen.top:8030/aikb/v1/biz/doc/upload',
+    onChange(info) {
+      const { status } = info.file;
+      if (status !== 'uploading') {
+        console.log(info.file, info.fileList);
+      }
+      if (status === 'done') {
+        message.success(`${info.file.name} 上传成功.`);
+      } else if (status === 'error') {
+        message.error(`${info.file.name} 上传失败.`);
+      }
+      setFileList(info.fileList);
+    },
+    onDrop(e) {
+      console.log('Dropped files', e.dataTransfer.files);
+    },
   };
 
   useImperativeHandle(ref, () => ({
@@ -78,48 +82,54 @@ const App = (props, ref) => {
     const headers = {
       'Content-Type': 'application/json',
     };
-    const postData = {
-      tableType: 'ANALYSIS',
-      fileIdList: [
-        'local://home/cheng/aikb-fs//doc/biz/Dr14JL-SAL-XX5-2_缺陷剔除随机振动（公开）.xls',
-        'local://home/cheng/aikb-fs//doc/biz/Dr14JL-SAL-XX5-3_温度循环（公开）.xls',
-        'local://home/cheng/aikb-fs//doc/biz/Dr14JL-SAL-XX5-4_无故障检测随机振动（公开）.xls',
-        'local://home/cheng/aikb-fs//doc/biz/Dr14JL-SAL-XX5-6_高温老炼（公开）.xls',
-      ],
-      acceptingDataList: [
-        {
-          name: 'SAL系列低频振动传感器',
-          model: 'SAL',
-          itemList: [
-            {
-              code: 'SAL-3E0',
-              batch: '23010',
-              number:
-                '23010001,23010002,23010003,23010004,23010005,23010006,23010007,23010008,23010009,23010010,23010011,23010012',
-            },
-          ],
-        },
-      ],
-    };
-
-    const response = await fetch(
-      'http://ais.fxincen.top:8030/aikb/v1/biz/table/generate',
-      {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(postData),
-      }
+    let postData = {};
+    postData.tableType = configForm.getFieldValue('tableType');
+    postData.fileIdList = fileList.map(
+      (item) => item.response.payload[0].fileId
     );
-    const reader = response.body.getReader();
+    console.log('dataSource:', dataSource);
+    postData.acceptingDataList = dataSource.map((item) => {
+      return {
+        itemList: [item],
+      };
+    });
+    console.log('postData:', postData);
     let res = '';
+    try {
+      const response = await fetch(
+        'http://ais.fxincen.top:8030/aikb/v1/biz/table/generate',
+        {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(postData),
+        }
+      );
 
-    while (true) {
-      const { done, value } = await reader.read();
+      const reader = response.body.getReader();
 
-      if (done) {
-        break;
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+        res = JSON.parse(new TextDecoder().decode(value));
       }
-      res = JSON.parse(new TextDecoder().decode(value));
+    } catch (e) {
+      console.error(e);
+    }
+    console.log('res:', res);
+    if (!res.succeed && res.code === 'SYSTEM_INTERNAL_ERROR') {
+      message.error({
+        content: res.message,
+        duration: 4,
+      });
+    }
+    if (!res.succeed && res.code === 'CONSTRUCT_RENDER_DATA_NOT_SUPPORTED') {
+      message.error({
+        content: res.code,
+        duration: 4,
+      });
     }
     return res;
   };
@@ -128,23 +138,12 @@ const App = (props, ref) => {
   const nextStep = async () => {
     console.log('nextStep:', current);
     if (current === 0) {
-      tableForm.validateFields().then((values) => {
-        console.log('values:', values);
-        //setCurrent(1);
-      });
+      console.log('dataSource:', dataSource);
+      setCurrent(1);
     }
 
     if (current === 1) {
-      summaryForm.validateFields().then((values) => {
-        console.log('values:', values);
-        let str = formStr + `【主体信息描述】=${values.summary}`;
-        setSummaryStr(str);
-        generateSummary(prompt1, str, (result) => {
-          console.log('result:', result);
-          formatOutlineData(result[0].content.text);
-          setCurrent(2);
-        });
-      });
+      setCurrent(2);
     }
     if (current === 2) {
       //开始生成表格
@@ -170,11 +169,11 @@ const App = (props, ref) => {
   const prevStep1 = () => {
     setCurrent(current - 1);
   };
-  useEffect(() => {
-    if (isModalOpen) {
-      setCurrent(2);
-    }
-  }, [isModalOpen]);
+  // useEffect(() => {
+  //   if (isModalOpen) {
+  //     setCurrent(2);
+  //   }
+  // }, [isModalOpen]);
 
   return (
     <Modal
@@ -231,13 +230,21 @@ const App = (props, ref) => {
       )}
       {current === 0 ? (
         <div className="edit-container">
-          <EditTable editForm={editForm} />
+          <EditTable
+            editForm={editForm}
+            setFirstLoading={setFirstLoading}
+            dataSource={dataSource}
+            setDataSource={setDataSource}
+          />
         </div>
       ) : null}
       {current === 1 ? (
         <div style={{ height: '45vh' }}>
           <Form
             autoComplete="off"
+            initialValues={{
+              tableType: 'ANALYSIS',
+            }}
             form={configForm}
             labelCol={{
               span: 3,
@@ -250,7 +257,7 @@ const App = (props, ref) => {
           >
             <Form.Item
               label="表格分类"
-              name="summary"
+              name="tableType"
               rules={[
                 {
                   required: true,
@@ -259,8 +266,8 @@ const App = (props, ref) => {
               ]}
             >
               <Radio.Group>
-                <Radio value={1}>汇总表</Radio>
-                <Radio value={2}>分析表</Radio>
+                <Radio value="ANALYSIS">汇总表</Radio>
+                <Radio value="SUMMARY">分析表</Radio>
               </Radio.Group>
             </Form.Item>
           </Form>
@@ -275,8 +282,7 @@ const App = (props, ref) => {
               </p>
               <p className="ant-upload-text">点击或者拖拽文件上传</p>
               <p className="ant-upload-hint">
-                Support for a single or bulk upload. Strictly prohibited from
-                uploading company data or other banned files.
+                支持单个或批量上传，支持格式：.xls .xlsx
               </p>
             </Dragger>
           </div>
@@ -290,13 +296,13 @@ const App = (props, ref) => {
       <Divider />
       <div className="btn-group">
         {current === 0 ? (
-          <Button type="primary" loading={loading} onClick={nextStep}>
+          <Button type="primary" loading={firstLoading} onClick={nextStep}>
             下一步
           </Button>
         ) : null}
         {current === 1 ? (
           <Space>
-            <Button onClick={prevStep0}>返回:数据上传</Button>
+            <Button onClick={prevStep1}>上一步</Button>
             <Button type="primary" loading={loading} onClick={nextStep}>
               下一步
             </Button>
@@ -305,14 +311,14 @@ const App = (props, ref) => {
         {current === 2 ? (
           <Space>
             <Button onClick={prevStep0}>上一步</Button>
-            <Button loading={loading} onClick={nextStep}>
+            <Button type="primary" loading={loading} onClick={nextStep}>
               下一步
             </Button>
           </Space>
         ) : null}
         {current === 3 ? (
           <Space>
-            <Button onClick={prevStep1}>上一步</Button>
+            <Button onClick={prevStep0}>上一步</Button>
             <Button type="primary" loading={loading} onClick={nextStep}>
               插入文档
             </Button>

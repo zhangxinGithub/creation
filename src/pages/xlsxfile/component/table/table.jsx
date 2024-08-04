@@ -1,19 +1,10 @@
-import React, {
-  useContext,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-  useState,
-} from 'react';
+import React, { useContext, useEffect, forwardRef, useState } from 'react';
 import { Button, Form, Input, Space, Table, Select } from 'antd';
-import { find } from 'lodash';
 import { red } from '@ant-design/colors';
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
   const [form] = Form.useForm();
-  //将form放到dataSource中
-  console.log('form11111', form);
   return (
     <Form form={form} component={false}>
       <EditableContext.Provider value={form}>
@@ -25,13 +16,13 @@ const EditableRow = ({ index, ...props }) => {
 const EditableCell = ({
   title,
   editable,
-  select,
   children,
   dataIndex,
   record,
   handleSave,
   ...restProps
 }) => {
+  //console.log('restProps', restProps);
   const form = useContext(EditableContext);
   useEffect(() => {
     if (dataIndex) {
@@ -40,17 +31,9 @@ const EditableCell = ({
       });
     }
   }, []);
-  // const toggleEdit = () => {
-  //   setEditing(!editing);
-  //   form.setFieldsValue({
-  //     [dataIndex]: record[dataIndex],
-  //   });
-  //   console.log('form', form.getFieldsValue(dataIndex));
-  // };
   const save = async () => {
     try {
       const values = await form.validateFields();
-      toggleEdit();
       handleSave({
         ...record,
         ...values,
@@ -78,70 +61,12 @@ const EditableCell = ({
       </Form.Item>
     );
   }
-  if (select) {
-    childNode = (
-      <Form.Item
-        style={{
-          margin: 0,
-        }}
-        name={dataIndex}
-        rules={[
-          {
-            required: true,
-            message: `${title}不能为空`,
-          },
-        ]}
-      >
-        <Select
-          style={{
-            width: 140,
-          }}
-          // onBlur={save}
-          // onChange={save}
-          options={[
-            {
-              value: '压力传感器',
-              label: '压力传感器',
-            },
-            {
-              value: '脉动压力传感器',
-              label: '脉动压力传感器',
-            },
-          ]}
-        />
-      </Form.Item>
-    );
-  }
   return <td {...restProps}>{childNode}</td>;
 };
-const App = (props, ref) => {
-  const [dataSource, setDataSource] = useState([
-    // {
-    //   key: '0',
-    //   name: 'Edward King 0',
-    //   age: '32',
-    //   address: 'London, Park Lane no. 0',
-    // },
-  ]);
-  useImperativeHandle(ref, () => ({
-    dataSource,
-  }));
+const App = (props) => {
   const handleDelete = (key) => {
-    const newData = dataSource.filter((item) => item.key !== key);
-    // setDataSource(newData);
-  };
-  const onloadFile = (info, record) => {
-    console.log('info', info);
-    console.log('record', record);
-    if (info.file.status === 'done') {
-      console.log('info', info);
-      find(dataSource, { key: record.key }).filename =
-        info.file.response.payload[0].name;
-      dataSource[record.key].filename = info.file.response.payload[0].name;
-      find(dataSource, { key: record.key }).fileId =
-        info.file.response.payload[0].id;
-      setDataSource([...dataSource]);
-    }
+    const newData = props.dataSource.filter((item) => item.key !== key);
+    props.setDataSource(newData);
   };
   const defaultColumns = [
     {
@@ -174,7 +99,9 @@ const App = (props, ref) => {
             style={{
               color: red[5],
             }}
-            onClick={handleDelete(record.key)}
+            onClick={() => {
+              handleDelete(record.key);
+            }}
           >
             删除
           </a>
@@ -187,22 +114,21 @@ const App = (props, ref) => {
       //key是时间戳
       key: Date.now(),
       model: '',
-      code: ``,
+      code: '',
       batch: '',
       number: '',
-      filename: '',
     };
-    setDataSource([...dataSource, newData]);
+    props.setDataSource([...props.dataSource, newData]);
   };
   const handleSave = (row) => {
-    const newData = [...dataSource];
+    const newData = [...props.dataSource];
     const index = newData.findIndex((item) => row.key === item.key);
     const item = newData[index];
     newData.splice(index, 1, {
       ...item,
       ...row,
     });
-    setDataSource(newData);
+    props.setDataSource(newData);
   };
   const components = {
     body: {
@@ -211,7 +137,7 @@ const App = (props, ref) => {
     },
   };
   const columns = defaultColumns.map((col) => {
-    if (!col.editable && !col.select) {
+    if (!col.editable) {
       return col;
     }
     return {
@@ -221,7 +147,6 @@ const App = (props, ref) => {
         editable: col.editable,
         dataIndex: col.dataIndex,
         title: col.title,
-        select: col.select,
         handleSave,
       }),
     };
@@ -241,7 +166,7 @@ const App = (props, ref) => {
         components={components}
         rowClassName={() => 'editable-row'}
         bordered
-        dataSource={dataSource}
+        dataSource={props.dataSource}
         columns={columns}
         pagination={false}
         scroll={{ y: 240 }}
@@ -249,4 +174,4 @@ const App = (props, ref) => {
     </div>
   );
 };
-export default forwardRef(App);
+export default App;
