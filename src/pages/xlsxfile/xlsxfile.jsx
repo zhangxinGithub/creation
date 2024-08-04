@@ -76,7 +76,6 @@ const App = (props, ref) => {
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    form.resetFields();
   };
   const getGenerate = async () => {
     const headers = {
@@ -169,11 +168,17 @@ const App = (props, ref) => {
   const prevStep1 = () => {
     setCurrent(current - 1);
   };
-  // useEffect(() => {
-  //   if (isModalOpen) {
-  //     setCurrent(2);
-  //   }
-  // }, [isModalOpen]);
+  useEffect(() => {
+    if (isModalOpen) {
+      //重置
+      tableForm.resetFields();
+      configForm.resetFields();
+      editForm.resetFields();
+      setDataSource([]);
+      setFileList([]);
+      setCurrent(0);
+    }
+  }, [isModalOpen]);
 
   return (
     <Modal
