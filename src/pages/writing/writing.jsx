@@ -5,6 +5,7 @@ import stepIcon from '@/assets/img/step.png';
 import aiIcon from '@/assets/img/xiaozhi.png';
 import './index.less';
 import StepModel from './component/step-model/step-model';
+import XlsxModel from '@/pages/xlsxfile/xlsxfile';
 import Robot from './component/robot/robot';
 import Compare from './component/compare/compare';
 import essayIcon from '@/assets/img/essay.png';
@@ -35,6 +36,7 @@ const Main = () => {
   //预览html
   const [preHtml, setPreHtml] = useState('');
   const stepModelRef = useRef({});
+  const xlsxModelRef = useRef({});
   //全局loading
   const [globalLoading, setGlobalLoading] = useState(false);
 
@@ -44,6 +46,12 @@ const Main = () => {
     if (stepModelRef.current) {
       console.log(stepModelRef.current);
       stepModelRef.current.showModal(params);
+    }
+  };
+  const ShowXlsxFile = () => {
+    if (xlsxModelRef.current) {
+      console.log(xlsxModelRef.current);
+      xlsxModelRef.current.showModal();
     }
   };
   //切换左侧菜单
@@ -83,6 +91,11 @@ const Main = () => {
       callBack: () => {
         toggleRightMenu(300);
       },
+    },
+    {
+      title: '数据加工',
+      icon: aiIcon,
+      callBack: ShowXlsxFile,
     },
   ];
 
@@ -277,6 +290,7 @@ const Main = () => {
         setGlobalLoading={setGlobalLoading}
         globalLoading={globalLoading}
       />
+      <XlsxModel ref={xlsxModelRef} html={html} setHtml={setHtml} />
       <GroupDrawer ref={drawerRef} setHtml={setHtml} />
     </div>
   );
