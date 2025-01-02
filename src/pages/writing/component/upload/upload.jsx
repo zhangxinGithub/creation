@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { InboxOutlined } from '@ant-design/icons';
-import { message, Upload } from 'antd';
-import mammoth from 'mammoth';
+import { Upload } from 'antd';
+import { renderAsync } from "docx-preview"
 
 const { Dragger } = Upload;
 const config = {
@@ -28,6 +28,8 @@ const config = {
 };
 
 const App = (props) => {
+  const hiddenDivRef = useRef(null);
+
   //文件选择事件
   const fileChange = async (info) => {
     console.log('file', info.file);
@@ -42,10 +44,13 @@ const App = (props) => {
       const reader = new FileReader();
       reader.onload = function (evt) {
         //当文件读取完毕后
-        mammoth //调用mammoth组件的方法进行解析文件
-          .convertToHtml({ arrayBuffer: evt.target.result })
-          .then(function (resultObject) {
-            resolve(resultObject.value); //将处理好的html数据返回
+        renderAsync(evt.target.result, hiddenDivRef.current)
+          .then(function () {
+            //获取hiddenDivRef的html内容
+            const value = hiddenDivRef.current.innerHTML;
+            console.log('value',value)
+            props.editor.dangerouslyInsertHtml(value);
+            resolve(value);
           });
       };
       reader.readAsArrayBuffer(file); // 启动读取指定的 Blob 或 File 内容 ：https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsArrayBuffer
@@ -53,13 +58,16 @@ const App = (props) => {
   };
 
   return (
-    <Dragger {...config} onChange={fileChange}>
-      <p className="ant-upload-drag-icon">
-        <InboxOutlined />
-      </p>
-      <p className="ant-upload-text">单击或拖动文件到此区域进行上传</p>
-      <p className="ant-upload-hint">支持上传doc,docx等文件格式。</p>
-    </Dragger>
+    <>
+      <Dragger {...config} onChange={fileChange}>
+        <p className="ant-upload-drag-icon">
+          <InboxOutlined />
+        </p>
+        <p className="ant-upload-text">单击或拖动文件到此区域进行上传</p>
+        <p className="ant-upload-hint">支持上传doc,docx等文件格式。</p>
+      </Dragger>
+      <div ref={hiddenDivRef} style={{ display: 'none' }}></div>
+    </>
   );
 };
 export default App;

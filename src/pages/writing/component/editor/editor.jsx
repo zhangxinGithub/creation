@@ -72,9 +72,9 @@ function MyEditor(props) {
 
         <Editor
           defaultConfig={editorConfig}
-          value={props.html}
+          // value={props.html}
           onCreated={props.setEditor}
-          onChange={(editor) => props.setHtml(editor.getHtml())}
+          // onChange={(editor) => props.setHtml(editor.getHtml())}
           mode="default"
           style={{
             height: `calc(100% - ${toolbarHeight * 0.3}px)`,
