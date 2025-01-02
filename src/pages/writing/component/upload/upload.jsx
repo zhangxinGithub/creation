@@ -1,11 +1,11 @@
-import React from 'react';
-import { InboxOutlined } from '@ant-design/icons';
-import { message, Upload } from 'antd';
-import mammoth from 'mammoth';
+import React from "react";
+import { InboxOutlined } from "@ant-design/icons";
+import { message, Upload } from "antd";
+// import mammoth from '@/doc/mammoth.browser.min';
 
 const { Dragger } = Upload;
 const config = {
-  name: 'file',
+  name: "file",
   multiple: false,
   maxCount: 1,
   showUploadList: false,
@@ -23,16 +23,16 @@ const config = {
   //   // }
   // },
   onDrop(e) {
-    console.log('Dropped files', e.dataTransfer.files);
+    console.log("Dropped files", e.dataTransfer.files);
   },
 };
 
 const App = (props) => {
   //文件选择事件
   const fileChange = async (info) => {
-    console.log('file', info.file);
+    console.log("file", info.file);
     const value = await analysisWord(info.file.originFileObj); //解析word
-    console.log('value', value);
+    console.log("value", value);
     props.setHtml(value);
   };
 
