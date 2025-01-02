@@ -3,7 +3,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   forwardRef,
-} from 'react';
+} from "react";
 import {
   Modal,
   Form,
@@ -14,11 +14,11 @@ import {
   Space,
   Upload,
   message,
-} from 'antd';
+} from "antd";
 
-import './xlsxfile.less';
-import { SyncOutlined, InboxOutlined } from '@ant-design/icons';
-import EditTable from './component/table/table';
+import "./xlsxfile.less";
+import { SyncOutlined, InboxOutlined } from "@ant-design/icons";
+import EditTable from "./component/table/table";
 
 const { Dragger } = Upload;
 
@@ -31,12 +31,12 @@ const App = (props, ref) => {
   const [configForm] = Form.useForm();
   const [current, setCurrent] = useState(0);
   const [editForm] = Form.useForm();
-  const [preHtml, setPreHtml] = useState('');
+  const [preHtml, setPreHtml] = useState("");
   const [dataSource, setDataSource] = useState([]);
   const [fileList, setFileList] = useState([]);
 
   const onChange = (value) => {
-    console.log('onChange:', value);
+    console.log("onChange:", value);
     setCurrent(value);
   };
 
@@ -48,24 +48,24 @@ const App = (props, ref) => {
   };
 
   const uploadProps = {
-    name: 'documentList',
+    name: "documentList",
     multiple: true,
     fileList: fileList,
-    action: 'http://ais.fxincen.top:8030/aikb/v1/biz/doc/upload',
+    action: "http://ais.fxincen.top:8030/aikb/v1/biz/doc/upload",
     onChange(info) {
       const { status } = info.file;
-      if (status !== 'uploading') {
+      if (status !== "uploading") {
         console.log(info.file, info.fileList);
       }
-      if (status === 'done') {
+      if (status === "done") {
         message.success(`${info.file.name} 上传成功.`);
-      } else if (status === 'error') {
+      } else if (status === "error") {
         message.error(`${info.file.name} 上传失败.`);
       }
       setFileList(info.fileList);
     },
     onDrop(e) {
-      console.log('Dropped files', e.dataTransfer.files);
+      console.log("Dropped files", e.dataTransfer.files);
     },
   };
 
@@ -79,26 +79,26 @@ const App = (props, ref) => {
   };
   const getGenerate = async () => {
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
     let postData = {};
-    postData.tableType = configForm.getFieldValue('tableType');
+    postData.tableType = configForm.getFieldValue("tableType");
     postData.fileIdList = fileList.map(
       (item) => item.response.payload[0].fileId
     );
-    console.log('dataSource:', dataSource);
+    console.log("dataSource:", dataSource);
     postData.acceptingDataList = dataSource.map((item) => {
       return {
         itemList: [item],
       };
     });
-    console.log('postData:', postData);
-    let res = '';
+    console.log("postData:", postData);
+    let res = "";
     try {
       const response = await fetch(
-        'http://ais.fxincen.top:8030/aikb/v1/biz/table/generate',
+        "http://ais.fxincen.top:8030/aikb/v1/biz/table/generate",
         {
-          method: 'POST',
+          method: "POST",
           headers: headers,
           body: JSON.stringify(postData),
         }
@@ -117,14 +117,14 @@ const App = (props, ref) => {
     } catch (e) {
       console.error(e);
     }
-    console.log('res:', res);
-    if (!res.succeed && res.code === 'SYSTEM_INTERNAL_ERROR') {
+    console.log("res:", res);
+    if (!res.succeed && res.code === "SYSTEM_INTERNAL_ERROR") {
       message.error({
         content: res.message,
         duration: 4,
       });
     }
-    if (!res.succeed && res.code === 'CONSTRUCT_RENDER_DATA_NOT_SUPPORTED') {
+    if (!res.succeed && res.code === "CONSTRUCT_RENDER_DATA_NOT_SUPPORTED") {
       message.error({
         content: res.code,
         duration: 4,
@@ -135,9 +135,9 @@ const App = (props, ref) => {
 
   //下一步
   const nextStep = async () => {
-    console.log('nextStep:', current);
+    console.log("nextStep:", current);
     if (current === 0) {
-      console.log('dataSource:', dataSource);
+      console.log("dataSource:", dataSource);
       setCurrent(1);
     }
 
@@ -154,8 +154,17 @@ const App = (props, ref) => {
     }
     if (current === 3) {
       //插入文档
-      console.log('插入文档');
-      props.setHtml(props.html + preHtml);
+      console.log("插入文档");
+      //在props.html中查找字符串，插入preHtml
+      let index = props.html.indexOf(`试验结果确认分析表`) + 9;
+      if (index !== -1) {
+        let start = props.html.substring(0, index);
+        let end = props.html.substring(index);
+        props.setHtml(start + preHtml + end);
+      } else {
+        props.setHtml(props.html + preHtml);
+      }
+
       setIsModalOpen(false);
     }
   };
@@ -191,7 +200,7 @@ const App = (props, ref) => {
       className="step-model"
     >
       <Steps
-        style={{ marginBottom: '20px' }}
+        style={{ marginBottom: "20px" }}
         type="navigation"
         size="small"
         current={current}
@@ -200,19 +209,19 @@ const App = (props, ref) => {
         items={[
           {
             disabled: true,
-            title: '数据上传',
+            title: "数据上传",
           },
           {
             disabled: true,
-            title: '参数配置',
+            title: "参数配置",
           },
           {
             disabled: true,
-            title: '文件上传',
+            title: "文件上传",
           },
           {
             disabled: true,
-            title: '数据计算',
+            title: "数据计算",
           },
         ]}
       />
@@ -226,7 +235,7 @@ const App = (props, ref) => {
         >
           <div className="loading-body">
             <SyncOutlined
-              style={{ color: '#165dff', marginRight: '8px' }}
+              style={{ color: "#165dff", marginRight: "8px" }}
               spin
             />
             生成中...
@@ -244,11 +253,11 @@ const App = (props, ref) => {
         </div>
       ) : null}
       {current === 1 ? (
-        <div style={{ height: '45vh' }}>
+        <div style={{ height: "45vh" }}>
           <Form
             autoComplete="off"
             initialValues={{
-              tableType: 'ANALYSIS',
+              tableType: "ANALYSIS",
             }}
             form={configForm}
             labelCol={{
@@ -266,21 +275,21 @@ const App = (props, ref) => {
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: "请输入",
                 },
               ]}
             >
               <Radio.Group>
-                <Radio value="ANALYSIS">汇总表</Radio>
-                <Radio value="SUMMARY">分析表</Radio>
+                <Radio value="ANALYSIS">分析表</Radio>
+                <Radio value="SUMMARY">汇总表</Radio>
               </Radio.Group>
             </Form.Item>
           </Form>
         </div>
       ) : null}
       {current === 2 ? (
-        <div className="upload-files" style={{ height: '45vh' }}>
-          <div style={{ width: '800px' }}>
+        <div className="upload-files" style={{ height: "45vh" }}>
+          <div style={{ width: "800px" }}>
             <Dragger {...uploadProps}>
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
