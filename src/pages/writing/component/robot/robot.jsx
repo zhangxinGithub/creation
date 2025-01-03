@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useImperativeHandle } from 'react';
-import logo from '@/assets/img/xiaozhilogo.png';
+import React, { useState, useEffect, useImperativeHandle } from "react";
+import logo from "@/assets/img/xiaozhilogo.png";
 import {
   Input,
   message,
@@ -9,25 +9,25 @@ import {
   Dropdown,
   Modal,
   Tag,
-} from 'antd';
-import './robot.less';
-import palm from '@/assets/img/palm.png';
-import send from '@/assets/img/send.png';
+} from "antd";
+import "./robot.less";
+import palm from "@/assets/img/palm.png";
+import send from "@/assets/img/send.png";
 import {
   CloseCircleOutlined,
   UploadOutlined,
   FileTextOutlined,
   CloseOutlined,
-} from '@ant-design/icons';
-import { cloneDeep, find } from 'lodash';
-import { writingAssistant } from '../step-model/data';
-import ReactMarkdown from 'react-markdown';
-import gfm from 'remark-gfm';
+} from "@ant-design/icons";
+import { cloneDeep, find } from "lodash";
+import { writingAssistant } from "../step-model/data";
+import ReactMarkdown from "react-markdown";
+import gfm from "remark-gfm";
 
 const { TextArea } = Input;
 const config = {
-  name: 'documentList',
-  action: 'http://ais.fxincen.top:8030/aikb/v1/doc/upload',
+  name: "documentList",
+  action: "http://ais.fxincen.top:8030/aikb/v1/doc/upload",
   multiple: true,
   maxCount: 30,
   showUploadList: false,
@@ -37,7 +37,7 @@ let timer = null;
 let streamTimer = null;
 //loading状态
 let loading = false;
-let typeArr = ['汇报类', '调研类', '规划类', '方案类', '讲话类', '演讲类'];
+let typeArr = ["汇报类", "调研类", "规划类", "方案类", "讲话类", "演讲类"];
 const Robot = (props, ref) => {
   const [open, setOpen] = useState(false);
   //已经上传文件的列表
@@ -47,24 +47,24 @@ const Robot = (props, ref) => {
   //聊天记录
   const [chatList, setChatList] = useState([]);
   //输入框信息
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   //文件上传状态
   const [fileStatus, setFileStatus] = useState(false);
   //创作助手类型
-  const [writingType, setWritingType] = useState('');
+  const [writingType, setWritingType] = useState("");
   //发送消息
   const sendMessage = () => {
     //如果没有上传文件禁止使用rag
     if (writingOptions === 2 && fileList.length === 0) {
-      message.error('请先上传文件');
+      message.error("请先上传文件");
       return;
     }
     let list = chatList.concat();
     list.push({
-      type: 'USER',
+      type: "USER",
       value: inputValue,
     });
-    console.log('list', list);
+    console.log("list", list);
     setChatList(list);
   };
   //选择option
@@ -79,10 +79,10 @@ const Robot = (props, ref) => {
     };
     if (chatList.length > 0) {
       Modal.confirm({
-        title: '提示',
-        content: '切换状态会清空聊天记录，是否继续？',
-        okText: '确认',
-        cancelText: '取消',
+        title: "提示",
+        content: "切换状态会清空聊天记录，是否继续？",
+        okText: "确认",
+        cancelText: "取消",
         onOk() {
           okCallback();
         },
@@ -94,17 +94,17 @@ const Robot = (props, ref) => {
   };
   //复制text到剪切板
   const copyText = (text) => {
-    var input = document.createElement('input');
+    var input = document.createElement("input");
     input.value = text;
     document.body.appendChild(input);
     input.select();
-    document.execCommand('Copy');
+    document.execCommand("Copy");
     document.body.removeChild(input);
-    message.success('复制成功');
+    message.success("复制成功");
   };
   //将文本插入到编辑器中
   const insertText = (text) => {
-    if (props.html !== '<p><br></p>') {
+    if (props.html !== "<p><br></p>") {
       props.setHtml(props.html + `<p>${text}</p>`);
     } else {
       props.setHtml(`<p>${text}</p>`);
@@ -116,7 +116,7 @@ const Robot = (props, ref) => {
       key: item,
       label: (
         <a
-          style={{ color: writingType === item ? '#5c8bf7' : '#666' }}
+          style={{ color: writingType === item ? "#5c8bf7" : "#666" }}
           onClick={() => {
             selectOption(1);
             setWritingType(item);
@@ -129,13 +129,13 @@ const Robot = (props, ref) => {
   });
   //请求数据
   const getChatData = async (text) => {
-    let el = document.getElementById('middle-scroll');
+    let el = document.getElementById("middle-scroll");
 
     let postData = {
       messages: [
         {
-          role: 'SYSTEM',
-          content: { text: '你现在是一名经验丰富的公文写作专家，精通中文。' },
+          role: "SYSTEM",
+          content: { text: "你现在是一名经验丰富的公文写作专家，精通中文。" },
         },
       ],
       modelConfig: {
@@ -144,7 +144,7 @@ const Robot = (props, ref) => {
     };
     if (writingOptions === 1) {
       postData.messages.push({
-        role: 'USER',
+        role: "USER",
         content: { text: writingAssistant.type[writingType] },
       });
     }
@@ -155,19 +155,19 @@ const Robot = (props, ref) => {
       });
     });
     const headers = new Headers({
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     });
-    let res = '';
+    let res = "";
     let copyChatList = cloneDeep(chatList);
     copyChatList.push({
-      type: 'ASSISTANT',
-      value: '',
+      type: "ASSISTANT",
+      value: "",
     });
     setChatList(copyChatList);
     const response = await fetch(
-      'http://ais.fxincen.top:8030/aikb/v1/chat/sessionless',
+      "http://ais.fxincen.top:8030/aikb/v1/chat/sessionless",
       {
-        method: 'POST',
+        method: "POST",
         headers: headers,
         body: JSON.stringify(postData),
       }
@@ -182,9 +182,9 @@ const Robot = (props, ref) => {
       }
       res += new TextDecoder().decode(value);
       //删除res中'data:'
-      res = res.replace(/data:/g, '');
+      res = res.replace(/data:/g, "");
       //删除res中的换行符
-      res = res.replace(/\n/g, '');
+      res = res.replace(/\n/g, "");
       let obj = cloneDeep(copyChatList);
       obj[obj.length - 1].value = res;
       setChatList(obj);
@@ -201,8 +201,8 @@ const Robot = (props, ref) => {
   }
   //RAG检索
   const getRagData = async (text) => {
-    console.log('text', text);
-    let el = document.getElementById('middle-scroll');
+    console.log("text", text);
+    let el = document.getElementById("middle-scroll");
     let postData = {
       documentIds: [],
       text: text,
@@ -214,19 +214,19 @@ const Robot = (props, ref) => {
       return item.response.payload[0].id;
     });
     const headers = new Headers({
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     });
-    let globalRes = '';
-    let reference = '';
+    let globalRes = "";
+    let reference = "";
     let copyChatList = cloneDeep(chatList);
     copyChatList.push({
-      type: 'ASSISTANT',
-      value: '',
-      reference: '',
+      type: "ASSISTANT",
+      value: "",
+      reference: "",
     });
     setChatList(copyChatList);
-    const response = await fetch('http://ais.fxincen.top:8030/aikb/v1/search', {
-      method: 'POST',
+    const response = await fetch("http://ais.fxincen.top:8030/aikb/v1/search", {
+      method: "POST",
       headers: headers,
       body: JSON.stringify(postData),
     });
@@ -235,17 +235,17 @@ const Robot = (props, ref) => {
     loading = true;
     //开启定时器
     streamTimer = setInterval(() => {
-      console.log('streamBody', globalRes);
+      console.log("streamBody", globalRes);
       let obj = cloneDeep(copyChatList);
       obj[obj.length - 1] = {
-        type: 'ASSISTANT',
+        type: "ASSISTANT",
         value: globalRes,
         reference: cloneDeep(reference),
       };
       setChatList(obj);
       el.scrollTop = el.scrollHeight;
       //查看globalRes最后一个字符是不是特殊字符
-      if (globalRes.indexOf('⁠⁣ ') > -1) {
+      if (globalRes.indexOf("⁠⁣ ") > -1) {
         //console.log('停止');
         clearInterval(streamTimer);
         streamTimer = null;
@@ -257,42 +257,42 @@ const Robot = (props, ref) => {
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        globalRes += '⁠⁣ ';
+        globalRes += "⁠⁣ ";
         break;
       }
 
       //解析对象
       let res = await new TextDecoder().decode(value);
-      if (res && res !== ' ') {
-        res = res.replace(/data:/g, '');
+      if (res && res !== " ") {
+        res = res.replace(/data:/g, "");
         //只去掉尾部双换行符
-        res = res.replace(/\n\n$/, '');
+        res = res.replace(/\n\n$/, "");
         //如果res中有双换行符则拆分成数组
-        if (res.indexOf('\n\n') > -1) {
-          let arr = res.split('\n\n');
-          console.log('多段一起返回了', arr);
+        if (res.indexOf("\n\n") > -1) {
+          let arr = res.split("\n\n");
+          console.log("多段一起返回了", arr);
           res = {
-            type: 'MESSAGE',
+            type: "MESSAGE",
             body: arr
-              .filter((item) => item !== '')
+              .filter((item) => item !== "")
               .map((item) => {
                 item = JSON.parse(item);
                 return item.body;
               })
-              .join(''),
+              .join(""),
           };
           res = JSON.stringify(res);
         }
         if (res) {
-          console.log('res', res);
+          console.log("res", res);
           if (canParseJSON(res)) {
             let resObj = JSON.parse(res);
-            if (resObj.type === 'REFERENCE') {
-              if (resObj.body !== '[]') {
+            if (resObj.type === "REFERENCE") {
+              if (resObj.body !== "[]") {
                 reference = resObj.body;
               }
             }
-            if (resObj.type === 'MESSAGE') {
+            if (resObj.type === "MESSAGE") {
               globalRes += resObj.body;
             }
           }
@@ -303,8 +303,8 @@ const Robot = (props, ref) => {
   //文档上传
   const upLoadChange = (info) => {
     //如果上传成功,则保存到fileList中
-    if (info.file.status === 'done') {
-      console.log('info', info);
+    if (info.file.status === "done") {
+      console.log("info", info);
       let list = fileList.concat();
       list.push(info.file);
       //只保留最后5个文件
@@ -312,7 +312,7 @@ const Robot = (props, ref) => {
         list = list.slice(-config.maxCount);
       }
       list.map((item) => {
-        item.sectionType = '切片中';
+        item.sectionType = "切片中";
         return item;
       });
       setFileList(list);
@@ -321,17 +321,17 @@ const Robot = (props, ref) => {
   //删除已经上传的文件
   const deleteFile = async (id, index) => {
     const headers = new Headers({
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     });
     const response = await fetch(
       `http://ais.fxincen.top:8030/aikb/v1/doc?id=${id}`,
       {
-        method: 'delete',
+        method: "delete",
         headers: headers,
       }
     );
     let res = await response.json();
-    console.log('res', res);
+    console.log("res", res);
 
     let list = fileList.concat();
     list.splice(index, 1);
@@ -341,20 +341,20 @@ const Robot = (props, ref) => {
   const content = (
     <div className="page-list">
       <div className="table-hr">
-        <div style={{ width: '80px' }}>名称</div>
-        <div style={{ width: '40px', paddingLeft: '4px' }}>状态</div>
+        <div style={{ width: "80px" }}>名称</div>
+        <div style={{ width: "40px", paddingLeft: "4px" }}>状态</div>
         <div>删除</div>
       </div>
       {fileList.map((item, index) => {
         return (
           <div key={index} className="table-th">
-            <div style={{ width: '80px' }}>{item.name}</div>
-            <div style={{ width: '40px', paddingLeft: '4px' }}>
+            <div style={{ width: "80px" }}>{item.name}</div>
+            <div style={{ width: "40px", paddingLeft: "4px" }}>
               {item.sectionType}
             </div>
             <div>
               <CloseOutlined
-                style={{ color: 'red', cursor: 'pointer' }}
+                style={{ color: "red", cursor: "pointer" }}
                 onClick={() => {
                   deleteFile(item.response.payload[0].id, index);
                 }}
@@ -368,13 +368,13 @@ const Robot = (props, ref) => {
   //传入文本id数组检测文章是否切片完成
   const checkFileStatus = async (idList) => {
     const headers = new Headers({
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     });
-    let str = idList.map((item) => `id=${item}`).join('&');
+    let str = idList.map((item) => `id=${item}`).join("&");
     const response = await fetch(
       `http://ais.fxincen.top:8030/aikb/v1/doc?${str}`,
       {
-        method: 'get',
+        method: "get",
         headers: headers,
       }
     );
@@ -382,10 +382,10 @@ const Robot = (props, ref) => {
     //更新fileList中的sectionType
     let cloneList = cloneDeep(fileList);
     cloneList.map((item) => {
-      if (item.sectionType === '切片中') {
+      if (item.sectionType === "切片中") {
         let doc = find(res.payload, { id: item.response.payload[0].id });
-        if (doc && doc.splitStatus === 'SPLIT_COMPLETED') {
-          item.sectionType = '已完成';
+        if (doc && doc.splitStatus === "SPLIT_COMPLETED") {
+          item.sectionType = "已完成";
         }
       }
       return item;
@@ -397,26 +397,26 @@ const Robot = (props, ref) => {
   const checkFile = () => {
     checkFileStatus(
       fileList
-        .filter((item) => item.sectionType === '切片中')
+        .filter((item) => item.sectionType === "切片中")
         .map((item) => item.response.payload[0].id)
     ).then((res) => {
-      console.log('res111111', res);
+      console.log("res111111", res);
     });
   };
   //使用modal展示命中片段
   const showReference = (reference) => {
     let arr = [];
-    console.log('reference', reference);
+    console.log("reference", reference);
     if (reference) {
       arr = JSON.parse(reference);
     } else {
-      message.error('未命中片段');
+      message.error("未命中片段");
       return;
     }
 
     Modal.info({
-      title: '命中片段',
-      width: '800px',
+      title: "命中片段",
+      width: "800px",
       content: (
         <div>
           {arr
@@ -428,19 +428,19 @@ const Robot = (props, ref) => {
             })
             .map((item, index) => {
               return (
-                <div key={index} style={{ marginBottom: '10px' }}>
-                  <div style={{ color: '#5c8bf7' }}>
+                <div key={index} style={{ marginBottom: "10px" }}>
+                  <div style={{ color: "#5c8bf7" }}>
                     {item.title}
-                    <Tag style={{ marginLeft: '10px' }} color="processing">
+                    <Tag style={{ marginLeft: "10px" }} color="processing">
                       相似度:{item.score}
                     </Tag>
                   </div>
                   <pre
                     style={{
-                      marginBottom: '10px',
-                      width: '100%',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-wrap',
+                      marginBottom: "10px",
+                      width: "100%",
+                      wordWrap: "break-word",
+                      whiteSpace: "pre-wrap",
                     }}
                   >
                     {item.content}
@@ -458,7 +458,7 @@ const Robot = (props, ref) => {
     //将最后一个user对话记录下来
     // let lastValue = list.filter((item) => item.type === 'USER')[list.length - 1]
     //   .value;
-    let lastItem = list.filter((item) => item.type === 'USER');
+    let lastItem = list.filter((item) => item.type === "USER");
     let lastValue = lastItem[lastItem.length - 1].value;
 
     setInputValue(lastValue);
@@ -470,7 +470,7 @@ const Robot = (props, ref) => {
   useEffect(() => {
     if (chatList.length > 0) {
       let last = chatList[chatList.length - 1];
-      if (last.type === 'USER') {
+      if (last.type === "USER") {
         //请求数据
         if (writingOptions === 2) {
           getRagData(inputValue);
@@ -478,7 +478,7 @@ const Robot = (props, ref) => {
           getChatData(inputValue);
         }
         //删除输入框内容
-        setInputValue('');
+        setInputValue("");
       }
     }
   }, [chatList]);
@@ -498,7 +498,7 @@ const Robot = (props, ref) => {
       }, 5000);
     }
     if (!open) {
-      console.log('clear');
+      console.log("clear");
       //清除定时器
       clearInterval(timer);
       timer = null;
@@ -516,7 +516,7 @@ const Robot = (props, ref) => {
           onClick={() => {
             props.toggleRightMenu(0);
           }}
-          style={{ color: '#666', cursor: 'pointer' }}
+          style={{ color: "#666", cursor: "pointer" }}
         />
       </div>
       <div className="middle" id="middle-scroll">
@@ -532,21 +532,21 @@ const Robot = (props, ref) => {
           </div>
         </div>
         {chatList.map((item, index) => {
-          if (item.type === 'USER') {
+          if (item.type === "USER") {
             return (
               <div className="user" key={index}>
                 <div className="user-text">{item.value}</div>
               </div>
             );
           }
-          if (item.type === 'ASSISTANT' && item.value === '') {
+          if (item.type === "ASSISTANT" && item.value === "") {
             return (
               <div className="robot" key={index}>
                 <div className="robot-text">加载中...</div>
               </div>
             ); //加载状态
           }
-          if (item.type === 'ASSISTANT' && item.value !== '') {
+          if (item.type === "ASSISTANT" && item.value !== "") {
             return (
               <div className="robot" key={index}>
                 <div className="robot-text">
@@ -609,7 +609,7 @@ const Robot = (props, ref) => {
             >
               <div
                 className={
-                  writingOptions === 1 ? 'option-btn action' : 'option-btn'
+                  writingOptions === 1 ? "option-btn action" : "option-btn"
                 }
               >
                 AI创作助手
@@ -617,7 +617,7 @@ const Robot = (props, ref) => {
             </Dropdown>
             <div
               className={
-                writingOptions === 2 ? 'option-btn action' : 'option-btn'
+                writingOptions === 2 ? "option-btn action" : "option-btn"
               }
               onClick={() => {
                 selectOption(2);
@@ -641,9 +641,9 @@ const Robot = (props, ref) => {
               >
                 <FileTextOutlined
                   style={{
-                    color: '#5c8bf7',
-                    fontSize: '14px',
-                    cursor: 'pointer',
+                    color: "#5c8bf7",
+                    fontSize: "14px",
+                    cursor: "pointer",
                   }}
                 />
               </Popover>
@@ -659,18 +659,18 @@ const Robot = (props, ref) => {
               e.preventDefault();
 
               //如果是shift+enter换行
-              console.log('e.shiftKey', e);
+              console.log("e.shiftKey", e);
               if (e.shiftKey) {
-                setInputValue(inputValue + '\n');
+                setInputValue(inputValue + "\n");
               } else {
-                if (inputValue === '') {
+                if (inputValue === "") {
                   return;
                 }
                 sendMessage();
               }
             }}
             className="textArea"
-            style={{ fontSize: '12px', resize: 'none', border: 'none' }}
+            style={{ fontSize: "12px", resize: "none", border: "none" }}
             placeholder="帮我把以下文字内容进行丰富，写到200字，内容如下：
 [尽管 AI 技术在理论和实验室环境中取得了显著进展，但在实际产业应用中，仍然缺乏成熟的解决方案。](shift+enter)"
             rows={5}
