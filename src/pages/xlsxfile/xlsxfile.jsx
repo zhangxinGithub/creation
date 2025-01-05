@@ -31,7 +31,6 @@ const App = (props, ref) => {
   const [configForm] = Form.useForm();
   const [current, setCurrent] = useState(0);
   const [editForm] = Form.useForm();
-  const [preHtml, setPreHtml] = useState("");
   const [dataSource, setDataSource] = useState([]);
   const [fileList, setFileList] = useState([]);
 
@@ -148,24 +147,18 @@ const App = (props, ref) => {
       //开始生成表格
       let res = await getGenerate();
       if (res.succeed) {
-        await setPreHtml(res.payload.tableList[0]);
-        await setCurrent(3);
+        let preHtml = res.payload.tableList[0];
+        let index = props.html.indexOf(`试验结果确认分析表`) + 9;
+        if (index !== -1) {
+          let start = props.html.substring(0, index);
+          let end = props.html.substring(index);
+          props.setHtml(start + preHtml + end);
+        } else {
+          props.setHtml(props.html + preHtml);
+        }
+        console.log("index:", index);
+        setIsModalOpen(false);
       }
-    }
-    if (current === 3) {
-      //插入文档
-      console.log("插入文档");
-      //在props.html中查找字符串，插入preHtml
-      let index = props.html.indexOf(`试验结果确认分析表`) + 9;
-      if (index !== -1) {
-        let start = props.html.substring(0, index);
-        let end = props.html.substring(index);
-        props.setHtml(start + preHtml + end);
-      } else {
-        props.setHtml(props.html + preHtml);
-      }
-
-      setIsModalOpen(false);
     }
   };
 
@@ -218,10 +211,6 @@ const App = (props, ref) => {
           {
             disabled: true,
             title: "文件上传",
-          },
-          {
-            disabled: true,
-            title: "数据计算",
           },
         ]}
       />
@@ -302,11 +291,6 @@ const App = (props, ref) => {
           </div>
         </div>
       ) : null}
-      {current === 3 ? (
-        <div className="upload-files">
-          <div dangerouslySetInnerHTML={{ __html: preHtml }}></div>
-        </div>
-      ) : null}
       <Divider />
       <div className="btn-group">
         {current === 0 ? (
@@ -323,14 +307,6 @@ const App = (props, ref) => {
           </Space>
         ) : null}
         {current === 2 ? (
-          <Space>
-            <Button onClick={prevStep0}>上一步</Button>
-            <Button type="primary" loading={loading} onClick={nextStep}>
-              下一步
-            </Button>
-          </Space>
-        ) : null}
-        {current === 3 ? (
           <Space>
             <Button onClick={prevStep0}>上一步</Button>
             <Button type="primary" loading={loading} onClick={nextStep}>
