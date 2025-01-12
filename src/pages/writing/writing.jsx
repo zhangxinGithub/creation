@@ -1,26 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Radio, Button, Space, message } from 'antd';
-import Editor from './component/editor/editor';
-import stepIcon from '@/assets/img/step.png';
-import aiIcon from '@/assets/img/xiaozhi.png';
-import './index.less';
-import StepModel from './component/step-model/step-model';
-import XlsxModel from '@/pages/xlsxfile/xlsxfile';
-import Robot from './component/robot/robot';
-import Compare from './component/compare/compare';
-import essayIcon from '@/assets/img/essay.png';
-import groupIcon from '@/assets/img/group.png';
-import homeIcon from '@/assets/img/home.png';
-import checkIcon from '@/assets/img/check.png';
-import '@/common/html-docx';
-import FileSaver from 'file-saver';
-import Upload from './component/upload/upload';
-import { docList } from '@/doc/docx';
-import GroupDrawer from './component/group-drawer/group-drawer';
+import React, { useEffect, useRef, useState } from "react";
+import { Radio, Button, Space, message, Modal } from "antd";
+import Editor from "./component/editor/editor";
+import stepIcon from "@/assets/img/step.png";
+import aiIcon from "@/assets/img/xiaozhi.png";
+import "./index.less";
+import StepModel from "./component/step-model/step-model";
+import XlsxModel from "@/pages/xlsxfile/xlsxfile";
+import Robot from "./component/robot/robot";
+import Compare from "./component/compare/compare";
+import essayIcon from "@/assets/img/essay.png";
+import groupIcon from "@/assets/img/group.png";
+import homeIcon from "@/assets/img/home.png";
+import checkIcon from "@/assets/img/check.png";
+import "@/common/html-docx";
+import FileSaver from "file-saver";
+import Upload from "./component/upload/upload";
+import { docList } from "@/doc/docx";
+import GroupDrawer from "./component/group-drawer/group-drawer";
+import { template } from "@/doc/template";
 
 let compareWidth = 450;
 //保存高亮前的html
-let htmlCopy = '';
+let htmlCopy = "";
 const Main = () => {
   const drawerRef = useRef({});
   // editor 实例
@@ -32,15 +33,15 @@ const Main = () => {
   // 编辑器内容
   const [html, setHtml] = useState();
   //左侧菜单radio选中值
-  const [radioValue, setRadioValue] = useState('0');
+  const [radioValue, setRadioValue] = useState("0");
   //预览html
-  const [preHtml, setPreHtml] = useState('');
+  const [preHtml, setPreHtml] = useState("");
   const stepModelRef = useRef({});
   const xlsxModelRef = useRef({});
   //全局loading
   const [globalLoading, setGlobalLoading] = useState(false);
 
-  const [preHtmlCopy, setPreHtmlCopy] = useState('');
+  const [preHtmlCopy, setPreHtmlCopy] = useState("");
 
   const showStepModel = (params) => {
     if (stepModelRef.current) {
@@ -68,17 +69,17 @@ const Main = () => {
   };
   const editList = [
     {
-      title: '步骤写作',
+      title: "步骤写作",
       icon: stepIcon,
       callBack: showStepModel,
     },
     {
-      title: 'AI校对',
+      title: "AI校对",
       icon: checkIcon,
       callBack: () => {
-        console.log('AI校对', html);
-        if (html === '<p><br></p>') {
-          message.info('校对前请先编写文章');
+        console.log("AI校对", html);
+        if (html === "<p><br></p>") {
+          message.info("校对前请先编写文章");
           return;
         }
         htmlCopy = html;
@@ -86,14 +87,14 @@ const Main = () => {
       },
     },
     {
-      title: '妙笔AI',
+      title: "妙笔AI",
       icon: aiIcon,
       callBack: () => {
         toggleRightMenu(300);
       },
     },
     {
-      title: '数据加工',
+      title: "数据加工",
       icon: aiIcon,
       callBack: ShowXlsxFile,
     },
@@ -101,10 +102,10 @@ const Main = () => {
 
   //导出文章
   const exportArticle = () => {
-    exportToDocx(html);
+    showModal();
   };
 
-  const exportToDocx = (htmlContent, fileName = 'exported-document.docx') => {
+  const exportToDocx = (htmlContent, fileName = "exported-document.docx") => {
     // 构建包含 HTML 内容的完整 HTML 文档字符串
     const fullHtmlContent = `
     <!DOCTYPE html>
@@ -117,7 +118,7 @@ const Main = () => {
       </body>
     </html>
   `;
-    console.log('fullHtmlContent', fullHtmlContent);
+    console.log("fullHtmlContent", fullHtmlContent);
     // 使用 html-docx-js 将 HTML 转换为 Word 文档的 Blob 对象
     const converted = window.htmlDocx.asBlob(fullHtmlContent);
 
@@ -126,7 +127,7 @@ const Main = () => {
   };
   const highLight = (text, keyword) => {
     //在text中高亮显示keyword
-    const reg = new RegExp(keyword, 'g');
+    const reg = new RegExp(keyword, "g");
     return text.replace(reg, `<b   style="color:red">${keyword}</b>`);
   };
   const onSearch = (value) => {
@@ -140,6 +141,28 @@ const Main = () => {
     let str1 = preHtmlCopy;
     setHtml(highLight(str, value));
     setPreHtml(highLight(str1, value));
+  };
+  //TODO:后期删除
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const copyText = () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = html;
+    textarea.style.position = "absolute";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
   };
 
   return (
@@ -193,26 +216,26 @@ const Main = () => {
           <div
             className="left-body"
             style={{
-              width: leftMenuState ? '200px' : '0px',
+              width: leftMenuState ? "200px" : "0px",
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+            <div style={{ textAlign: "center", marginBottom: "10px" }}>
               <Radio.Group
                 value={radioValue}
                 onChange={() => {
-                  if (radioValue === '0') {
-                    setRadioValue('1');
+                  if (radioValue === "0") {
+                    setRadioValue("1");
                   } else {
-                    setRadioValue('0');
+                    setRadioValue("0");
                   }
                 }}
-                style={{ margin: 'auto' }}
+                style={{ margin: "auto" }}
               >
                 <Radio.Button value="0">模板库</Radio.Button>
                 <Radio.Button value="1">上传范文</Radio.Button>
               </Radio.Group>
             </div>
-            {radioValue !== '0' ? (
+            {radioValue !== "0" ? (
               <div>
                 <Upload editor={editor} setHtml={setHtml} />
               </div>
@@ -292,6 +315,37 @@ const Main = () => {
       />
       <XlsxModel ref={xlsxModelRef} html={html} setHtml={setHtml} />
       <GroupDrawer ref={drawerRef} setHtml={setHtml} />
+      <Modal
+        title="Basic Modal"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Button
+          onClick={() => {
+            //复制文本
+            copyText();
+
+            message.success("复制成功");
+          }}
+        >
+          复制文本
+        </Button>
+        <Button
+          onClick={() => {
+            exportToDocx(html);
+          }}
+        >
+          导出文件
+        </Button>
+        <Button
+          onClick={() => {
+            setHtml(template);
+          }}
+        >
+          替换
+        </Button>
+      </Modal>
     </div>
   );
 };

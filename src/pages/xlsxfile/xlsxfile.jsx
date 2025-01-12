@@ -14,11 +14,13 @@ import {
   Space,
   Upload,
   message,
+  Input,
 } from "antd";
 
 import "./xlsxfile.less";
 import { SyncOutlined, InboxOutlined } from "@ant-design/icons";
 import EditTable from "./component/table/table";
+import { template } from "@/doc/template";
 
 const { Dragger } = Upload;
 
@@ -133,7 +135,6 @@ const App = (props, ref) => {
   const nextStep = async () => {
     console.log("nextStep:", current);
     if (current === 0) {
-      console.log("dataSource:", dataSource);
       setCurrent(1);
     }
 
@@ -145,15 +146,37 @@ const App = (props, ref) => {
       let res = await getGenerate();
       if (res.succeed) {
         let preHtml = res.payload.tableList[0];
-        let index = props.html.indexOf(`试验结果确认分析表`) + 9;
-        if (index !== -1) {
-          let start = props.html.substring(0, index);
-          let end = props.html.substring(index);
-          props.setHtml(start + preHtml + end);
-        } else {
-          props.setHtml(props.html + preHtml);
+        console.log("dataSource:");
+        let configValues = configForm.getFieldsValue(true);
+        let copyTemplate = template;
+        if (dataSource.length > 0) {
+          let data = dataSource[0];
+          //替换template中的数据
+          //系列
+          copyTemplate = copyTemplate.replace(/{{ProductSeries}}/g, data.model);
+          //编号
+          copyTemplate = copyTemplate.replace(/{{ProductNum}}/g, data.number);
+          //代号
+          copyTemplate = copyTemplate.replace(/{{ProductCode}}/g, data.code);
+          //名称
+          copyTemplate = copyTemplate.replace(
+            /{{ProductName}}/g,
+            configValues.ProductName
+          );
+          //数量
+          copyTemplate = copyTemplate.replace(
+            /{{deliverQuantity}}/g,
+            configValues.deliverNum
+          );
+          //时间
+          copyTemplate = copyTemplate.replace(/{{Time}}/g, configValues.Time);
+          //表格数据
+          copyTemplate = copyTemplate.replace(
+            /{{table}}/g,
+            JSON.stringify(preHtml)
+          );
         }
-        console.log("index:", index);
+        props.setHtml(copyTemplate);
         setIsModalOpen(false);
       }
     }
@@ -183,7 +206,6 @@ const App = (props, ref) => {
     <Modal
       title="AI数据加工"
       open={isModalOpen}
-      // onOk={configForm.submit}
       width={1200}
       onCancel={handleCancel}
       footer={null}
@@ -269,6 +291,42 @@ const App = (props, ref) => {
                 <Radio value="ANALYSIS">分析表</Radio>
                 <Radio value="SUMMARY">汇总表</Radio>
               </Radio.Group>
+            </Form.Item>
+            <Form.Item
+              label="报告编写时间"
+              name="Time"
+              rules={[
+                {
+                  required: true,
+                  message: "请输入",
+                },
+              ]}
+            >
+              <Input style={{ width: "250px" }} placeholder="请填写" />
+            </Form.Item>
+            <Form.Item
+              label="产品名称"
+              name="ProductName"
+              rules={[
+                {
+                  required: true,
+                  message: "请输入",
+                },
+              ]}
+            >
+              <Input style={{ width: "250px" }} placeholder="请填写" />
+            </Form.Item>
+            <Form.Item
+              label="交付数量"
+              name="deliverNum"
+              rules={[
+                {
+                  required: true,
+                  message: "请输入",
+                },
+              ]}
+            >
+              <Input style={{ width: "250px" }} placeholder="请填写" />
             </Form.Item>
           </Form>
         </div>
