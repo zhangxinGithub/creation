@@ -27,7 +27,7 @@ import gfm from "remark-gfm";
 const { TextArea } = Input;
 const config = {
   name: "documentList",
-  action: "http://ais.fxincen.top:8030/aikb/v1/doc/upload",
+  action: "/aikb/v1/doc/upload",
   multiple: true,
   maxCount: 30,
   showUploadList: false,
@@ -164,14 +164,11 @@ const Robot = (props, ref) => {
       value: "",
     });
     setChatList(copyChatList);
-    const response = await fetch(
-      "http://ais.fxincen.top:8030/aikb/v1/chat/sessionless",
-      {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(postData),
-      }
-    );
+    const response = await fetch("/aikb/v1/chat/sessionless", {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(postData),
+    });
     //流式输出
     const reader = response.body.getReader();
     while (true) {
@@ -225,7 +222,7 @@ const Robot = (props, ref) => {
       reference: "",
     });
     setChatList(copyChatList);
-    const response = await fetch("http://ais.fxincen.top:8030/aikb/v1/search", {
+    const response = await fetch("/aikb/v1/search", {
       method: "POST",
       headers: headers,
       body: JSON.stringify(postData),
@@ -323,13 +320,10 @@ const Robot = (props, ref) => {
     const headers = new Headers({
       "Content-Type": "application/json",
     });
-    const response = await fetch(
-      `http://ais.fxincen.top:8030/aikb/v1/doc?id=${id}`,
-      {
-        method: "delete",
-        headers: headers,
-      }
-    );
+    const response = await fetch(`/aikb/v1/doc?id=${id}`, {
+      method: "delete",
+      headers: headers,
+    });
     let res = await response.json();
     console.log("res", res);
 
@@ -371,13 +365,10 @@ const Robot = (props, ref) => {
       "Content-Type": "application/json",
     });
     let str = idList.map((item) => `id=${item}`).join("&");
-    const response = await fetch(
-      `http://ais.fxincen.top:8030/aikb/v1/doc?${str}`,
-      {
-        method: "get",
-        headers: headers,
-      }
-    );
+    const response = await fetch(`/aikb/v1/doc?${str}`, {
+      method: "get",
+      headers: headers,
+    });
     let res = await response.json();
     //更新fileList中的sectionType
     let cloneList = cloneDeep(fileList);

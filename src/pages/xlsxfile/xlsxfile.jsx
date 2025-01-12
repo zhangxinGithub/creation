@@ -50,7 +50,7 @@ const App = (props, ref) => {
     name: "documentList",
     multiple: true,
     fileList: fileList,
-    action: "http://ais.fxincen.top:8030/aikb/v1/biz/doc/upload",
+    action: "/aikb/v1/biz/doc/upload",
     onChange(info) {
       const { status } = info.file;
       if (status !== "uploading") {
@@ -94,14 +94,11 @@ const App = (props, ref) => {
     console.log("postData:", postData);
     let res = "";
     try {
-      const response = await fetch(
-        "http://ais.fxincen.top:8030/aikb/v1/biz/table/generate",
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(postData),
-        }
-      );
+      const response = await fetch("/aikb/v1/biz/table/generate", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(postData),
+      });
 
       const reader = response.body.getReader();
 

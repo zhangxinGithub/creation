@@ -236,14 +236,11 @@ const App = (props, ref) => {
       "Content-Type": "application/json",
     });
     try {
-      const response = await fetch(
-        "http://ais.fxincen.top:8030/aikb/v1/chat/sessionless",
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(postData),
-        }
-      );
+      const response = await fetch("/aikb/v1/chat/sessionless", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(postData),
+      });
       console.log("response:", response);
       //解析非流式返回体
       const res = await response.json();
@@ -300,14 +297,11 @@ const App = (props, ref) => {
       "Content-Type": "application/json",
     });
     try {
-      const response = await fetch(
-        "http://ais.fxincen.top:8030/aikb/v1/chat/sessionless",
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(postData),
-        }
-      );
+      const response = await fetch("/aikb/v1/chat/sessionless", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(postData),
+      });
       //流式输出
       const reader = response.body.getReader();
       let res = "";
